@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<!--
+============================================================
+  CAPA DE PRESENTACIÓN - ControlCash v2.1
+  Sistema Profesional de Control Financiero
+============================================================
+  Normas aplicadas:
+    - ISO 9126: Usabilidad, Comprensibilidad, Aprendibilidad
+    - ISO/IEC 25000 (SQuaRE): Calidad en uso
+    - ISO 14598: Evaluación de interfaz de usuario
+    - ISO/IEC 27001: Seguridad de la información
+    - OWASP Mobile Top 10: Seguridad en aplicaciones móviles
+    - CMMI Nivel 3: Procesos definidos y estandarizados
+============================================================
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
+    <meta name="description" content="ControlCash - Sistema profesional de control financiero personal con seguridad biométrica">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>ControlCash - Control Financiero Inteligente</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js v4 via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Orbes de luz ambiental -->
+    <div class="liquid-orb liquid-orb--1"></div>
+    <div class="liquid-orb liquid-orb--2"></div>
+    <div class="liquid-orb liquid-orb--3"></div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ============================================================
+         VISTA: AUTENTICACIÓN
+         ============================================================ -->
+    <div id="auth-view" class="auth-view">
+        <div class="auth-container">
+            <div class="glass-panel auth-card glass-panel--static">
+                <div class="auth-logo">
+                    <svg class="auth-logo-icon" viewBox="0 0 48 48" width="56" height="56">
+                        <defs>
+                            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6C63FF"/>
+                                <stop offset="100%" style="stop-color:#00B4D8"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="4" y="8" width="40" height="32" rx="6" fill="none" stroke="url(#logo-grad)" stroke-width="2.5"/>
+                        <path d="M24 16 C20 16, 17 18.5, 17 21.5 C17 24, 19 25.5, 22 26.5 C25 27.5, 27 28.5, 27 30.5 C27 33, 24.5 34, 22 34 M24 14 L24 16 M24 34 L24 36" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                        <circle cx="38" cy="12" r="5" fill="url(#logo-grad)" opacity="0.9"/>
+                        <path d="M36.5 12 L37.5 13 L39.5 11" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+                <h1>ControlCash</h1>
+                <p class="subtitle" id="auth-subtitle">Control financiero inteligente y seguro</p>
+
+                <div class="security-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>Protegido con cifrado de extremo a extremo</span>
+                </div>
+
+                <div id="auth-error" class="error-message"></div>
+
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="glass-input-group">
+                        <label for="login-email">Correo electrónico</label>
+                        <input type="email" id="login-email" class="glass-input" placeholder="tu@email.com" autocomplete="email" required>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" class="glass-input" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="glass-btn glass-btn--primary glass-btn--lg glass-btn--block">
+                        Iniciar Sesión
+                    </button>
+                    <button type="button" id="btn-biometric" class="glass-btn glass-btn--biometric glass-btn--lg glass-btn--block" onclick="autenticacionBiometrica()" style="display: none;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
+                            <path d="M5 19.5C5.5 18 6 15 6 12c0-3.5 2.5-6 6-6"/>
+                            <path d="M22 12c0 5.5-4.5 10-10 10a10 10 0 0 1-7-3"/>
+                            <path d="M14 12c0 2-1 4-2 6"/>
+                            <path d="M10 12c0-1 1-2 2-2s2 1 2 2-1 4-2 6"/>
+                            <path d="M18 12c0-4-3-8-6-8"/>
+                        </svg>
+                        Acceder con Biométrico
+                    </button>
+                    <div class="auth-divider" id="auth-divider-biometric" style="display: none;"><span>o usa tus credenciales</span></div>
+                    <div class="auth-toggle">¿No tienes cuenta? <a onclick="toggleAuthForm('register')">Regístrate</a></div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" style="display: none;">
+                    <div class="glass-input-group">
+                        <label for="reg-nombre">Nombre completo</label>
+                        <input type="text" id="reg-nombre" class="glass-input" placeholder="Tu nombre" autocomplete="name" required>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="reg-email">Correo electrónico</label>
+                        <input type="email" id="reg-email" class="glass-input" placeholder="tu@email.com" autocomplete="email" required>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="reg-password">Contraseña</label>
+                        <input type="password" id="reg-password" class="glass-input" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                    </div>
+                    <div class="password-strength" id="password-strength">
+                        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+                        <span class="strength-text" id="strength-text">Seguridad de contraseña</span>
+                    </div>
+                    <button type="submit" class="glass-btn glass-btn--primary glass-btn--lg glass-btn--block">
+                        Crear Cuenta Segura
+                    </button>
+                    <div class="auth-toggle">¿Ya tienes cuenta? <a onclick="toggleAuthForm('login')">Inicia sesión</a></div>
+                </form>
+
+                <div class="auth-compliance">
+                    <span>ISO 27001</span>
+                    <span>OWASP</span>
+                    <span>AES-256</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         VISTA: DASHBOARD PRINCIPAL
+         ============================================================ -->
+    <div id="dashboard" class="dashboard">
+
+        <!-- Navbar -->
+        <nav class="glass-navbar">
+            <div class="container">
+                <div class="navbar-brand">
+                    <svg viewBox="0 0 28 28" width="24" height="24">
+                        <defs><linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#6C63FF"/><stop offset="100%" style="stop-color:#00B4D8"/>
+                        </linearGradient></defs>
+                        <rect x="2" y="4" width="24" height="20" rx="4" fill="none" stroke="url(#nav-grad)" stroke-width="2"/>
+                        <path d="M14 8 C11 8, 9 10, 9 12 C9 13.5, 10.5 14.5, 12.5 15 C14.5 15.5, 16 16.5, 16 18 C16 19.5, 14.5 20.5, 12.5 20.5 M14 7 L14 8 M14 20.5 L14 21.5" stroke="url(#nav-grad)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                    </svg>
+                    ControlCash
+                </div>
+                <div class="navbar-actions">
+                    <span class="navbar-user" id="navbar-user"></span>
+
+                    <!-- Toggle modo claro/oscuro -->
+                    <button class="glass-btn glass-btn--sm" id="btn-toggle-modo" title="Cambiar tema">☀️</button>
+
+                    <!-- Campana de notificaciones -->
+                    <button class="glass-btn glass-btn--sm notification-badge" onclick="toggleNotificationPanel()" id="notif-btn">
+                        🔔
+                        <span class="badge-count" id="notif-count" style="display:none">0</span>
+                    </button>
+
+                    <button class="glass-btn glass-btn--sm" onclick="cerrarSesion()">Salir</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Notification Panel -->
+        <div id="notification-panel" class="glass-panel notification-panel glass-panel--static"></div>
+
+        <div class="container">
+
+            <!-- ========== SECCIÓN: Balance ========== -->
+            <section class="dashboard-section slide-up" style="animation-delay: 0.1s">
+                <div class="glass-panel balance-card glass-panel--static">
+                    <p class="balance-label">Balance Disponible</p>
+                    <h2 class="balance-amount positive" id="balance-total">$0.00</h2>
+                    <div class="balance-details">
+                        <div class="balance-detail">
+                            <p class="balance-detail-label">Ingresos</p>
+                            <p class="balance-detail-value income" id="balance-ingresos">$0.00</p>
+                        </div>
+                        <div class="balance-detail">
+                            <p class="balance-detail-label">Gastos</p>
+                            <p class="balance-detail-value expense" id="balance-gastos">$0.00</p>
+                        </div>
+                        <div class="balance-detail">
+                            <p class="balance-detail-label">Movimientos</p>
+                            <p class="balance-detail-value" id="balance-movimientos">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== SECCIÓN: Acciones rápidas ========== -->
+            <section class="dashboard-section slide-up" style="animation-delay: 0.2s">
+                <div class="flex flex--between" style="margin-bottom: var(--space-md);">
+                    <h3 class="section-title" style="margin-bottom: 0;">Acciones</h3>
+                </div>
+                <div class="grid grid--2">
+                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalMovimiento('ingreso')" style="cursor:pointer; text-align:left; border:none;">
+                        <div class="stat-icon stat-icon--success">📥</div>
+                        <div class="stat-info"><h4>Nuevo Ingreso</h4><p style="color: var(--color-success);">Registrar entrada</p></div>
+                    </button>
+                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalMovimiento('gasto')" style="cursor:pointer; text-align:left; border:none;">
+                        <div class="stat-icon stat-icon--danger">📤</div>
+                        <div class="stat-info"><h4>Nuevo Gasto</h4><p style="color: var(--color-danger);">Registrar salida</p></div>
+                    </button>
+                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalOCR()" style="cursor:pointer; text-align:left; border:none;">
+                        <div class="stat-icon" style="background: rgba(168,85,247,0.15); color: #a855f7;">📷</div>
+                        <div class="stat-info"><h4>Escanear Recibo</h4><p style="color: #a855f7;">OCR con IA</p></div>
+                    </button>
+                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalChat()" style="cursor:pointer; text-align:left; border:none;">
+                        <div class="stat-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">🤖</div>
+                        <div class="stat-info"><h4>Asistente IA</h4><p style="color: #3b82f6;">Chat financiero</p></div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ========== SECCIÓN: Perfil IA ========== -->
+            <section class="dashboard-section slide-up" id="seccion-perfil-ia" style="animation-delay: 0.25s">
+                <h3 class="section-title">🧠 Tu Perfil Financiero (IA)</h3>
+                <div class="glass-panel perfil-ia-card glass-panel--static" style="position: relative;">
+
+                    <!-- Skeleton loader -->
+                    <div id="perfil-skeleton" class="skeleton-overlay" style="display: flex;">
+                        <div class="skeleton-perfil-inner">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="skeleton-perfil-lines">
+                                <div class="skeleton skeleton-line-xl"></div>
+                                <div class="skeleton skeleton-score-bar"></div>
+                                <div class="skeleton skeleton-line-lg" style="margin-top:8px;"></div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+                            <div class="skeleton skeleton-tag"></div>
+                            <div class="skeleton skeleton-tag"></div>
+                            <div class="skeleton skeleton-tag"></div>
+                        </div>
+                        <div class="skeleton skeleton-line-lg" style="margin-top:12px;"></div>
+                        <div class="skeleton skeleton-line-sm" style="margin-top:6px;"></div>
+                    </div>
+
+                    <!-- Contenido real -->
+                    <div id="perfil-ia-contenido">
+                        <div class="perfil-ia-header">
+                            <div id="perfil-avatar" class="perfil-avatar">🧠</div>
+                            <div class="perfil-info">
+                                <h3 id="perfil-tipo-label" class="perfil-tipo-label">Analizando...</h3>
+                                <div class="perfil-score-bar">
+                                    <span class="perfil-score-label">Score financiero</span>
+                                    <div class="score-track">
+                                        <div id="perfil-score-fill" class="score-fill" style="width: 0%"></div>
+                                    </div>
+                                    <span id="perfil-score-num" class="perfil-score-num">--</span>
+                                    <span class="perfil-score-max">/100</span>
+                                </div>
+                            </div>
+                            <button id="btn-actualizar-perfil" class="glass-btn glass-btn--sm">↻ Actualizar</button>
+                        </div>
+                        <div id="perfil-tags" class="perfil-tags"></div>
+                        <p id="perfil-narrativa" class="perfil-narrativa"></p>
+                        <div id="perfil-detalles" class="perfil-detalles"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== SECCIÓN: Resumen del mes ========== -->
+            <section class="dashboard-section slide-up" style="animation-delay: 0.3s">
+                <h3 class="section-title">📊 Resumen del Mes</h3>
+
+                <!-- Métricas -->
+                <div class="metrics-grid" id="resumen-metricas">
+                    <div class="glass-panel metric-card glass-panel--static">
+                        <span class="metric-icon">📉</span>
+                        <span class="metric-label">Promedio diario</span>
+                        <span class="metric-value" id="metric-promedio">$0.00</span>
+                    </div>
+                    <div class="glass-panel metric-card glass-panel--static">
+                        <span class="metric-icon">🔮</span>
+                        <span class="metric-label">Proyección 30d</span>
+                        <span class="metric-value" id="metric-proyeccion">$0.00</span>
+                    </div>
+                    <div class="glass-panel metric-card glass-panel--static">
+                        <span class="metric-icon">📊</span>
+                        <span class="metric-label">vs. periodo anterior</span>
+                        <span class="metric-value" id="metric-variacion">0%</span>
+                    </div>
+                    <div class="glass-panel metric-card glass-panel--static">
+                        <span class="metric-icon">🔢</span>
+                        <span class="metric-label">Movimientos</span>
+                        <span class="metric-value" id="metric-movimientos">0</span>
+                    </div>
+                </div>
+
+                <!-- Top 3 gastos -->
+                <div class="glass-panel glass-panel--static" id="top-gastos" style="margin-bottom: var(--space-md); display: none;">
+                    <h4 style="margin-bottom: var(--space-sm); font-size: var(--font-size-sm); color: var(--glass-text-secondary);">🔥 Top 3 Gastos</h4>
+                    <div id="top-gastos-list"></div>
+                </div>
+
+                <!-- Charts: Donut + Línea de tendencia -->
+                <div class="charts-grid">
+                    <div class="glass-panel chart-container glass-panel--static">
+                        <h4 class="chart-title">Gastos por Categoría</h4>
+                        <div class="chart-canvas-wrapper">
+                            <canvas id="chart-categorias"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-panel chart-container glass-panel--static">
+                        <h4 class="chart-title">Tendencia Diaria (30 días)</h4>
+                        <div class="chart-canvas-wrapper">
+                            <canvas id="chart-tendencia"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== SECCIÓN: Movimientos recientes ========== -->
+            <section class="dashboard-section slide-up" style="animation-delay: 0.4s">
+                <div class="flex flex--between" style="margin-bottom: var(--space-md);">
+                    <h3 class="section-title" style="margin-bottom: 0;">Movimientos Recientes</h3>
+                    <div class="flex" style="gap: var(--space-sm);">
+                        <button class="glass-btn glass-btn--sm" onclick="exportarCSV()" title="Exportar CSV">📥 CSV</button>
+                        <div class="glass-tabs">
+                            <button class="glass-tab active" onclick="filtrarMovimientos('todos', this)">Todos</button>
+                            <button class="glass-tab" onclick="filtrarMovimientos('ingreso', this)">Ingresos</button>
+                            <button class="glass-tab" onclick="filtrarMovimientos('gasto', this)">Gastos</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros avanzados -->
+                <div class="glass-panel filtros-avanzados glass-panel--static">
+                    <div class="filtros-row">
+                        <div class="filtro-grupo">
+                            <label class="filtro-label">Desde</label>
+                            <input type="date" id="filtro-desde" class="glass-input glass-input--sm">
+                        </div>
+                        <div class="filtro-grupo">
+                            <label class="filtro-label">Hasta</label>
+                            <input type="date" id="filtro-hasta" class="glass-input glass-input--sm">
+                        </div>
+                        <div class="filtro-grupo">
+                            <label class="filtro-label">Categoría</label>
+                            <select id="filtro-categoria" class="glass-input glass-select glass-input--sm">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="filtro-grupo">
+                            <label class="filtro-label">Monto mín</label>
+                            <input type="number" id="filtro-monto-min" class="glass-input glass-input--sm" placeholder="$0" min="0">
+                        </div>
+                        <div class="filtro-grupo">
+                            <label class="filtro-label">Monto máx</label>
+                            <input type="number" id="filtro-monto-max" class="glass-input glass-input--sm" placeholder="∞" min="0">
+                        </div>
+                        <div class="filtro-acciones">
+                            <button class="glass-btn glass-btn--primary glass-btn--sm" onclick="aplicarFiltrosAvanzados()">🔍 Filtrar</button>
+                            <button class="glass-btn glass-btn--sm" onclick="limpiarFiltrosAvanzados()">✕ Limpiar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel transaction-list glass-panel--static" id="lista-movimientos">
+                    <div class="empty-state">
+                        <div class="empty-icon">💸</div>
+                        <p>No hay movimientos registrados</p>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /container -->
+    </div><!-- /dashboard -->
+
+    <!-- ============================================================
+         MODAL: Nuevo Movimiento
+         ============================================================ -->
+    <div id="modal-movimiento" class="glass-modal-overlay">
+        <div class="glass-modal">
+            <div class="glass-modal-header">
+                <h2 id="modal-movimiento-titulo">Nuevo Movimiento</h2>
+                <button class="glass-modal-close" onclick="cerrarModal('modal-movimiento')">&times;</button>
+            </div>
+            <div class="glass-modal-body">
+                <div id="modal-error" class="error-message"></div>
+                <form id="form-movimiento">
+                    <input type="hidden" id="mov-tipo" value="gasto">
+                    <div class="glass-input-group">
+                        <label for="mov-monto">Monto ($)</label>
+                        <input type="number" id="mov-monto" class="glass-input" placeholder="0.00" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="mov-categoria">Categoría</label>
+                        <select id="mov-categoria" class="glass-input glass-select" required>
+                            <option value="">Seleccionar categoría</option>
+                        </select>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="mov-descripcion">Descripción (opcional)</label>
+                        <input type="text" id="mov-descripcion" class="glass-input" placeholder="Descripción del movimiento" maxlength="500">
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="mov-fecha">Fecha</label>
+                        <input type="date" id="mov-fecha" class="glass-input">
+                    </div>
+                    <button type="submit" class="glass-btn glass-btn--primary glass-btn--lg glass-btn--block" id="btn-guardar-mov">
+                        Guardar Movimiento
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Editar Movimiento (NUEVO)
+         ============================================================ -->
+    <div id="modal-editar-movimiento" class="glass-modal-overlay">
+        <div class="glass-modal">
+            <div class="glass-modal-header">
+                <h2 id="modal-editar-titulo">✏️ Editar Movimiento</h2>
+                <button class="glass-modal-close" onclick="cerrarModal('modal-editar-movimiento')">&times;</button>
+            </div>
+            <div class="glass-modal-body">
+                <div id="edit-modal-error" class="error-message"></div>
+                <form id="form-editar-movimiento">
+                    <input type="hidden" id="edit-mov-tipo" value="gasto">
+                    <div class="glass-input-group">
+                        <label for="edit-mov-monto">Monto ($)</label>
+                        <input type="number" id="edit-mov-monto" class="glass-input" placeholder="0.00" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="edit-mov-categoria">Categoría</label>
+                        <select id="edit-mov-categoria" class="glass-input glass-select" required>
+                            <option value="">Seleccionar categoría</option>
+                        </select>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="edit-mov-descripcion">Descripción (opcional)</label>
+                        <input type="text" id="edit-mov-descripcion" class="glass-input" placeholder="Descripción del movimiento" maxlength="500">
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="edit-mov-fecha">Fecha</label>
+                        <input type="date" id="edit-mov-fecha" class="glass-input">
+                    </div>
+                    <button type="submit" class="glass-btn glass-btn--primary glass-btn--lg glass-btn--block">
+                        Guardar Cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Confirmar Borrado (NUEVO)
+         ============================================================ -->
+    <div id="modal-confirmar-borrado" class="glass-modal-overlay">
+        <div class="glass-modal glass-modal--sm">
+            <div class="glass-modal-header">
+                <h2>🗑️ Eliminar Movimiento</h2>
+                <button class="glass-modal-close" onclick="cerrarModal('modal-confirmar-borrado')">&times;</button>
+            </div>
+            <div class="glass-modal-body">
+                <p style="text-align: center; margin-bottom: var(--space-lg); color: var(--text-secondary);">
+                    ¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.
+                </p>
+                <div class="flex" style="gap: var(--space-sm);">
+                    <button id="btn-cancelar-borrado" class="glass-btn glass-btn--block" style="flex:1;">
+                        Cancelar
+                    </button>
+                    <button id="btn-confirmar-borrado" class="glass-btn glass-btn--danger glass-btn--block" style="flex:1;">
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: OCR
+         ============================================================ -->
+    <div class="glass-modal-overlay" id="modal-ocr" onclick="if(event.target===this) cerrarModal('modal-ocr')">
+        <div class="glass-modal">
+            <div class="glass-modal-header">
+                <h2>📷 Escanear Recibo</h2>
+                <button class="btn-close" onclick="cerrarModal('modal-ocr')" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="glass-modal-body">
+                <div class="ocr-upload-area" id="ocr-drop-zone">
+                    <input type="file" id="ocr-file-input" accept="image/*" capture="environment" style="display:none;">
+                    <div class="ocr-placeholder" id="ocr-placeholder">
+                        <span style="font-size: 3rem;">📷</span>
+                        <p>Toca para tomar foto o seleccionar imagen</p>
+                        <p style="font-size: var(--font-size-xs); color: var(--glass-text-secondary);">Formatos: JPG, PNG (máx 10 MB)</p>
+                    </div>
+                    <img id="ocr-preview" style="display:none; max-width:100%; max-height:300px; border-radius: var(--radius-md);">
+                </div>
+                <div id="ocr-resultado" style="display:none; margin-top: var(--space-md);">
+                    <h4 style="margin-bottom: var(--space-sm);">Datos extraídos:</h4>
+                    <div id="ocr-datos"></div>
+                </div>
+                <div id="ocr-loading" style="display:none; text-align:center; padding: var(--space-lg);">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: var(--space-sm);">Analizando recibo con IA...</p>
+                </div>
+                <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md);">
+                    <button class="glass-btn glass-btn--primary" id="btn-escanear" onclick="escanearRecibo()" style="flex:1;" disabled>
+                        Analizar con IA
+                    </button>
+                    <button class="glass-btn glass-btn--primary" id="btn-usar-ocr" onclick="usarDatosOCR()" style="flex:1; display:none;">
+                        Usar datos → Nuevo Gasto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Chat LLM
+         ============================================================ -->
+    <div class="glass-modal-overlay" id="modal-chat" onclick="if(event.target===this) cerrarModal('modal-chat')">
+        <div class="glass-modal" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="glass-modal-header">
+                <h2>🤖 Asistente Financiero</h2>
+                <button class="btn-close" onclick="cerrarModal('modal-chat')" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="glass-modal-body" style="flex:1; display:flex; flex-direction:column; overflow: hidden;">
+                <div id="chat-messages" style="flex:1; overflow-y:auto; margin-bottom: var(--space-md); padding: var(--space-sm);">
+                    <div class="chat-msg chat-msg--bot">
+                        <span class="chat-avatar">🤖</span>
+                        <div class="chat-bubble">¡Hola! Soy tu asistente financiero. Pregúntame sobre tus gastos, consejos de ahorro, o análisis de tu situación.</div>
+                    </div>
+                </div>
+                <form id="chat-form" style="display:flex; gap: var(--space-sm);" onsubmit="enviarChat(event)">
+                    <input type="text" class="glass-input" id="chat-input" placeholder="Escribe tu pregunta..." autocomplete="off" style="flex:1;">
+                    <button type="submit" class="glass-btn glass-btn--primary" id="btn-chat-send">Enviar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

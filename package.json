@@ -1,0 +1,28 @@
+{
+  "name": "controlcash",
+  "version": "2.0.0",
+  "description": "ControlCash - Sistema Profesional de Control Financiero",
+  "main": "api/app.py",
+  "scripts": {
+    "cap:init": "npx @capacitor/cli init ControlCash com.controlcash.app --web-dir app",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:build:apk": "cd android && ./gradlew assembleDebug",
+    "cap:build:release": "cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor-community/biometric-auth": "^6.0.0",
+    "@capacitor/preferences": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0"
+  }
+}

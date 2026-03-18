@@ -1,0 +1,80 @@
+{
+  "appId": "com.controlcash.app",
+  "appName": "ControlCash",
+  "webDir": "app",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor",
+    "hostname": "controlcash.app"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2500,
+      "launchAutoHide": true,
+      "autoHide": true,
+      "backgroundColor": "#0a0a1a",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": true,
+      "spinnerStyle": "small",
+      "spinnerColor": "#6C63FF",
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0a0a1a",
+      "overlaysWebView": false
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "BiometricAuth": {
+      "reason": "Autenticación segura para acceder a ControlCash",
+      "title": "ControlCash - Verificación Biométrica",
+      "subtitle": "Usa tu huella digital o Face ID",
+      "negativeButtonText": "Usar contraseña",
+      "maxAttempts": 3,
+      "allowDeviceCredential": true
+    },
+    "Preferences": {
+      "group": "ControlCashSecureStorage"
+    },
+    "Haptics": {
+      "impactStyle": "medium"
+    },
+    "App": {
+      "appUrlOpen": true,
+      "appRestoredResult": true
+    },
+    "ScreenOrientation": {
+      "defaultOrientation": "portrait"
+    },
+    "PrivacyScreen": {
+      "enable": true,
+      "imageName": "Splashscreen"
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#0a0a1a",
+    "buildOptions": {
+      "keystorePath": null,
+      "keystorePassword": null,
+      "releaseType": "AAB"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "backgroundColor": "#0a0a1a",
+    "scheme": "ControlCash"
+  }
+}
