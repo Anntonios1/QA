@@ -1,0 +1,17 @@
+.git
+.gitignore
+.vscode
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.log
+node_modules
+android
+ios
+cookies.txt
+NUL
+.env
+.env.*
+!.env.example

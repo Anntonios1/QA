@@ -1,0 +1,245 @@
+Project quality_finanzas {
+  database_type: 'MySQL'
+  Note: '''
+    Sistema de Control de Gastos Personales - ControlCash
+    Compatible con PostgreSQL y MySQL/MariaDB (XAMPP)
+    
+    Normas aplicadas:
+    - ISO/IEC 27001: Seguridad de la información (JWT, AES-256, PBKDF2)
+    - ISO/IEC 12207: Ciclo de vida del software
+    - ISO 9001:2015: Gestión de calidad
+    - CMMI Nivel 3: Proceso definido
+  '''
+}
+
+// ============================================================
+// TABLAS DE AUTENTICACIÓN Y USUARIOS
+// ============================================================
+
+Table usuarios {
+  id int [pk, increment]
+  nombre varchar(100) [not null, note: 'CHECK(CHAR_LENGTH(nombre) >= 2)']
+  email varchar(254) [not null, unique]
+  password_hash text [not null, note: 'PBKDF2-SHA256 + 16-byte salt + 100k iterations']
+  moneda varchar(3) [not null, default: 'COP', note: "CHECK(moneda IN ('COP','USD'))"]
+  presupuesto_mensual decimal(12,2) [not null, default: 0, note: 'Presupuesto mensual base']
+  fecha_creacion timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  activo tinyint [not null, default: 1, note: 'CHECK(activo IN (0, 1))']
+  
+  Note: 'Usuarios del sistema con autenticación segura'
+}
+
+Table refresh_tokens {
+  id int [pk, increment]
+  usuario_id int [not null]
+  token_hash varchar(64) [not null, unique, note: 'SHA-256 del refresh token']
+  expires_at timestamp [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  revoked tinyint [not null, default: 0, note: 'CHECK(revoked IN (0, 1))']
+  device_info varchar(255) [note: 'User-Agent o identificador del dispositivo']
+  
+  indexes {
+    usuario_id [name: 'idx_refresh_usuario']
+    expires_at [name: 'idx_refresh_expires']
+  }
+  
+  Note: 'Tokens JWT de refresco (ISO/IEC 27001 - Gestión de sesiones)'
+}
+
+// ============================================================
+// TABLAS DE CATÁLOGO
+// ============================================================
+
+Table tipos_movimiento {
+  id int [pk]
+  codigo varchar(10) [not null, unique, note: "CHECK(codigo IN ('ingreso', 'gasto'))"]
+
+  Note: 'Catalogo de tipos de movimiento'
+}
+
+Table categorias {
+  id int [pk, increment]
+  nombre varchar(100) [not null, unique, note: 'CHECK(CHAR_LENGTH(nombre) >= 2)']
+  tipo_id int [not null, note: 'FK a tipos_movimiento']
+  icono varchar(32) [default: '💰']
+  descripcion varchar(255) [default: '']
+  activo tinyint [not null, default: 1, note: 'CHECK(activo IN (0, 1))']
+  
+  Note: 'Catálogo de categorías para clasificar movimientos'
+}
+
+// ============================================================
+// TABLAS TRANSACCIONALES
+// ============================================================
+
+Table movimientos {
+  id int [pk, increment]
+  usuario_id int [not null]
+  categoria_id int [not null]
+  tipo_id int [not null, note: 'FK a tipos_movimiento']
+  monto decimal(12,2) [not null, note: 'CHECK(monto > 0)']
+  descripcion text [default: '', note: 'Puede cifrarse con AES-256-GCM']
+  fecha timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  fecha_registro timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    usuario_id [name: 'idx_mov_usuario']
+    fecha [name: 'idx_mov_fecha']
+    tipo_id [name: 'idx_mov_tipo_id']
+  }
+  
+  Note: 'Registro de ingresos y gastos'
+}
+
+Table presupuestos {
+  id int [pk, increment]
+  usuario_id int [not null]
+  categoria_id int [note: 'NULL = presupuesto global del mes']
+  monto_limite decimal(12,2) [not null, note: 'CHECK(monto_limite > 0)']
+  mes date [not null, note: 'Primer día del mes (YYYY-MM-01)']
+  activo tinyint [not null, default: 1, note: 'CHECK(activo IN (0, 1))']
+  creado_en timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (usuario_id, categoria_id, mes) [unique, name: 'unique_presupuesto']
+    (usuario_id, mes) [name: 'idx_presupuestos_usuario']
+  }
+  
+  Note: 'Límites de gasto mensuales por categoría o globales'
+}
+
+Table recurrencias {
+  id int [pk, increment]
+  usuario_id int [not null]
+  categoria_id int [not null]
+  tipo_id int [not null, note: 'FK a tipos_movimiento']
+  monto decimal(12,2) [not null, note: 'CHECK(monto > 0)']
+  descripcion text [default: '']
+  frecuencia varchar(20) [not null, note: "CHECK(frecuencia IN ('diario','semanal','quincenal','mensual','anual'))"]
+  dia_ejecucion int [note: 'CHECK(dia_ejecucion BETWEEN 1 AND 31)']
+  proxima_fecha date [not null]
+  activo tinyint [not null, default: 1, note: 'CHECK(activo IN (0, 1))']
+  creado_en timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (usuario_id, activo) [name: 'idx_recurrencias_usuario']
+    (proxima_fecha, activo) [name: 'idx_recurrencias_proxima']
+  }
+  
+  Note: 'Transacciones programadas (salario, suscripciones, etc.)'
+}
+
+// ============================================================
+// TABLAS DE NOTIFICACIONES
+// ============================================================
+
+Table notificaciones {
+  id int [pk, increment]
+  usuario_id int [not null]
+  titulo varchar(200) [not null]
+  mensaje text [not null]
+  tipo varchar(10) [not null, default: 'info', note: "CHECK(tipo IN ('info','alerta','exito','error'))"]
+  leida tinyint [not null, default: 0, note: 'CHECK(leida IN (0, 1))']
+  fecha timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    usuario_id [name: 'idx_notif_usuario']
+    (usuario_id, leida) [name: 'idx_notif_leida']
+  }
+  
+  Note: 'Sistema de notificaciones push/in-app'
+}
+
+// ============================================================
+// TABLAS DE INTELIGENCIA ARTIFICIAL
+// ============================================================
+
+Table perfiles_ia {
+  id int [pk, increment]
+  usuario_id int [not null]
+  fecha date [not null, default: `CURRENT_DATE`]
+  tipo_label varchar(100) [note: 'Clasificación del perfil financiero']
+  score int [note: 'CHECK(score BETWEEN 0 AND 100)']
+  tags text [note: 'JSON array de etiquetas']
+  narrativa text [note: 'Descripción generada por IA']
+  habitos text [note: 'JSON array de hábitos positivos']
+  areas_mejora text [note: 'JSON array de áreas de mejora']
+  creado_en timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (usuario_id, fecha) [unique, name: 'idx_perfiles_ia_usuario']
+  }
+  
+  Note: 'Perfiles financieros generados por IA (NVIDIA NIM)'
+}
+
+Table insights_diarios {
+  id int [pk, increment]
+  usuario_id int [not null]
+  fecha date [not null, default: `CURRENT_DATE`]
+  enviado tinyint [not null, default: 0, note: 'CHECK(enviado IN (0, 1))']
+  mensaje text [note: 'Insight personalizado del día']
+
+  indexes {
+    (usuario_id, fecha) [unique, name: 'idx_insights_usuario']
+  }
+  
+  Note: 'Consejos diarios personalizados por IA'
+}
+
+// ============================================================
+// RELACIONES (Foreign Keys)
+// ============================================================
+
+// Autenticación
+Ref: refresh_tokens.usuario_id > usuarios.id [delete: cascade]
+
+// Movimientos
+Ref: movimientos.usuario_id > usuarios.id [delete: cascade]
+Ref: movimientos.categoria_id > categorias.id [delete: restrict]
+Ref: movimientos.tipo_id > tipos_movimiento.id [delete: restrict]
+
+// Catalogos
+Ref: categorias.tipo_id > tipos_movimiento.id [delete: restrict]
+
+// Presupuestos
+Ref: presupuestos.usuario_id > usuarios.id [delete: cascade]
+Ref: presupuestos.categoria_id > categorias.id [delete: set null]
+
+// Recurrencias
+Ref: recurrencias.usuario_id > usuarios.id [delete: cascade]
+Ref: recurrencias.categoria_id > categorias.id [delete: restrict]
+Ref: recurrencias.tipo_id > tipos_movimiento.id [delete: restrict]
+
+// Notificaciones
+Ref: notificaciones.usuario_id > usuarios.id [delete: cascade]
+
+// IA
+Ref: perfiles_ia.usuario_id > usuarios.id [delete: cascade]
+Ref: insights_diarios.usuario_id > usuarios.id [delete: cascade]
+
+// ============================================================
+// DATOS SEMILLA (Categorías por defecto)
+// ============================================================
+
+TableGroup Autenticacion {
+  usuarios
+  refresh_tokens
+}
+
+TableGroup Transacciones {
+  tipos_movimiento
+  categorias
+  movimientos
+  presupuestos
+  recurrencias
+}
+
+TableGroup Comunicacion {
+  notificaciones
+}
+
+TableGroup InteligenciaArtificial {
+  perfiles_ia
+  insights_diarios
+}

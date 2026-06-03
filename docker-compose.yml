@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: controlcash-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PG_DATABASE:-gastos_db}
+      POSTGRES_USER: ${PG_USER:-controlcash}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?Set PG_PASSWORD in .env.production}
+    volumes:
+      - controlcash_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-controlcash} -d ${PG_DATABASE:-gastos_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: controlcash-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_BACKEND: postgresql
+      PG_HOST: db
+      PG_PORT: 5432
+      PG_DATABASE: ${PG_DATABASE:-gastos_db}
+      PG_USER: ${PG_USER:-controlcash}
+      PG_PASSWORD: ${PG_PASSWORD:?Set PG_PASSWORD in .env.production}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.production}
+      AUTH_MODE: ${AUTH_MODE:-jwt}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env.production}
+      JWT_ACCESS_EXPIRES_MINUTES: ${JWT_ACCESS_EXPIRES_MINUTES:-15}
+      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
+      AES_MASTER_KEY: ${AES_MASTER_KEY:?Set AES_MASTER_KEY in .env.production}
+      AES_KEY_SALT: ${AES_KEY_SALT:-ControlCash_AES256_Salt_v1_2026}
+      ENCRYPT_SENSITIVE_DATA: ${ENCRYPT_SENSITIVE_DATA:-false}
+      ENVIRONMENT: production
+      API_PORT: 5000
+      API_HOST: 0.0.0.0
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_CONTACT: ${VAPID_CONTACT:-mailto:admin@controlcash.app}
+    ports:
+      - "127.0.0.1:${APP_PORT:-5055}:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=5)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  controlcash_pgdata:

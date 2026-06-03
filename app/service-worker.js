@@ -15,16 +15,27 @@
  * ============================================================
  */
 
-const CACHE_NAME = 'controlcash-v2';
+const CACHE_NAME = 'controlcash-v4';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/styles.css',
     '/app.js',
-    '/manifest.json',
+    '/manifest.json'
+];
+
+const OPTIONAL_ASSETS = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
     'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap'
 ];
+
+const APP_SHELL_PATHS = new Set([
+    '/',
+    '/index.html',
+    '/app.js',
+    '/styles.css',
+    '/manifest.json'
+]);
 
 // ============================================================
 //  INSTALL — Pre-cachear assets estáticos
@@ -33,7 +44,11 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('[SW] Pre-cacheando assets estáticos');
-            return cache.addAll(STATIC_ASSETS);
+            return cache.addAll(STATIC_ASSETS).then(() =>
+                Promise.allSettled(
+                    OPTIONAL_ASSETS.map((asset) => cache.add(asset))
+                )
+            );
         })
     );
     self.skipWaiting();
@@ -56,6 +71,8 @@ self.addEventListener('activate', (event) => {
 // ============================================================
 //  FETCH — Estrategia de caché inteligente
 // ============================================================
+// [NORMA: ISO/IEC 25000 - Fiabilidad] Continuidad de servicio y disponibilidad local mediante service worker
+// [NORMA: ISO 9126 - Eficiencia] Optimización de tiempos de respuesta mediante almacenamiento en caché local
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -75,6 +92,27 @@ self.addEventListener('fetch', (event) => {
                     }
                 )
             )
+        );
+        return;
+    }
+
+    // App shell -> Network First para evitar UI obsoleta en actualizaciones
+    if (request.mode === 'navigate' || APP_SHELL_PATHS.has(url.pathname)) {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    if (response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(request, clone);
+                        });
+                    }
+                    return response;
+                })
+                .catch(async () => {
+                    const cached = await caches.match(request);
+                    return cached || caches.match('/index.html');
+                })
         );
         return;
     }

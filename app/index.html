@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <!--
 ============================================================
-  CAPA DE PRESENTACIÓN - ControlCash v2.1
+  CAPA DE PRESENTACION - ControlCash v2.3
   Sistema Profesional de Control Financiero
 ============================================================
   Normas aplicadas:
     - ISO 9126: Usabilidad, Comprensibilidad, Aprendibilidad
     - ISO/IEC 25000 (SQuaRE): Calidad en uso
-    - ISO 14598: Evaluación de interfaz de usuario
-    - ISO/IEC 27001: Seguridad de la información
-    - OWASP Mobile Top 10: Seguridad en aplicaciones móviles
+    - ISO 14598: Evaluacion de interfaz de usuario
+    - ISO/IEC 27001: Seguridad de la informacion
+    - OWASP Mobile Top 10: Seguridad en aplicaciones moviles
     - CMMI Nivel 3: Procesos definidos y estandarizados
 ============================================================
 -->
@@ -17,7 +17,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
-    <meta name="description" content="ControlCash - Sistema profesional de control financiero personal con seguridad biométrica">
+    <meta name="description" content="ControlCash - Sistema profesional de control financiero personal con seguridad biometrica">
     <meta name="theme-color" content="#0a0a1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,9 +32,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
+    <style>
+      .fab-acciones { display: none !important; }
+    </style>
     <!-- Chart.js v4 via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- jsPDF and XLSX from vendor -->
+    <script src="vendor/jspdf.umd.min.js"></script>
+    <script src="vendor/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -47,7 +53,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- ============================================================
-         VISTA: AUTENTICACIÓN
+         VISTA: AUTENTICACION
          ============================================================ -->
     <div id="auth-view" class="auth-view">
         <div class="auth-container">
@@ -56,14 +62,12 @@
                     <svg class="auth-logo-icon" viewBox="0 0 48 48" width="56" height="56">
                         <defs>
                             <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#6C63FF"/>
-                                <stop offset="100%" style="stop-color:#00B4D8"/>
+                                <stop offset="0%" style="stop-color:#FF007A"/>
+                                <stop offset="100%" style="stop-color:#00E5FF"/>
                             </linearGradient>
                         </defs>
-                        <rect x="4" y="8" width="40" height="32" rx="6" fill="none" stroke="url(#logo-grad)" stroke-width="2.5"/>
-                        <path d="M24 16 C20 16, 17 18.5, 17 21.5 C17 24, 19 25.5, 22 26.5 C25 27.5, 27 28.5, 27 30.5 C27 33, 24.5 34, 22 34 M24 14 L24 16 M24 34 L24 36" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                        <circle cx="38" cy="12" r="5" fill="url(#logo-grad)" opacity="0.9"/>
-                        <path d="M36.5 12 L37.5 13 L39.5 11" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <circle cx="24" cy="24" r="20" fill="none" stroke="url(#logo-grad)" stroke-width="2.5"/>
+                        <text x="24" y="29" text-anchor="middle" fill="url(#logo-grad)" font-size="22" font-weight="800" font-family="Inter, sans-serif">C</text>
                     </svg>
                 </div>
                 <h1>ControlCash</h1>
@@ -81,15 +85,20 @@
                 <!-- Login Form -->
                 <form id="login-form">
                     <div class="glass-input-group">
-                        <label for="login-email">Correo electrónico</label>
+                        <label for="login-email">Correo electronico</label>
                         <input type="email" id="login-email" class="glass-input" placeholder="tu@email.com" autocomplete="email" required>
                     </div>
                     <div class="glass-input-group">
-                        <label for="login-password">Contraseña</label>
-                        <input type="password" id="login-password" class="glass-input" placeholder="••••••••" autocomplete="current-password" required>
+                        <label for="login-password">Contrasena</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="login-password" class="glass-input" placeholder="••••••••" autocomplete="current-password" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('login-password', this)" aria-label="Mostrar contrasena">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="glass-btn glass-btn--primary glass-btn--lg glass-btn--block">
-                        Iniciar Sesión
+                        Iniciar Sesion
                     </button>
                     <button type="button" id="btn-biometric" class="glass-btn glass-btn--biometric glass-btn--lg glass-btn--block" onclick="autenticacionBiometrica()" style="display: none;">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -100,10 +109,10 @@
                             <path d="M10 12c0-1 1-2 2-2s2 1 2 2-1 4-2 6"/>
                             <path d="M18 12c0-4-3-8-6-8"/>
                         </svg>
-                        Acceder con Biométrico
+                        Acceder con Biometrico
                     </button>
                     <div class="auth-divider" id="auth-divider-biometric" style="display: none;"><span>o usa tus credenciales</span></div>
-                    <div class="auth-toggle">¿No tienes cuenta? <a onclick="toggleAuthForm('register')">Regístrate</a></div>
+                    <div class="auth-toggle">¿No tienes cuenta? <a onclick="toggleAuthForm('register')">Registrate</a></div>
                 </form>
 
                 <!-- Register Form -->
@@ -111,23 +120,51 @@
                     <div class="glass-input-group">
                         <label for="reg-nombre">Nombre completo</label>
                         <input type="text" id="reg-nombre" class="glass-input" placeholder="Tu nombre" autocomplete="name" required>
+                        <div id="reg-nombre-error" class="error-message field-error-msg"></div>
                     </div>
                     <div class="glass-input-group">
-                        <label for="reg-email">Correo electrónico</label>
+                        <label for="reg-email">Correo electronico</label>
                         <input type="email" id="reg-email" class="glass-input" placeholder="tu@email.com" autocomplete="email" required>
                     </div>
                     <div class="glass-input-group">
-                        <label for="reg-password">Contraseña</label>
-                        <input type="password" id="reg-password" class="glass-input" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                        <label for="reg-password">Contrasena</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="reg-password" class="glass-input" placeholder="Minimo 8 caracteres" autocomplete="new-password" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-password', this)" aria-label="Mostrar contrasena">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="reg-password-confirm">Confirmar contrasena</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="reg-password-confirm" class="glass-input" placeholder="Repite tu contrasena" autocomplete="new-password" required>
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('reg-password-confirm', this)" aria-label="Mostrar contrasena">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="reg-moneda">Moneda</label>
+                        <select id="reg-moneda" class="glass-input glass-select">
+                            <option value="COP">COP - Peso colombiano</option>
+                            <option value="USD">USD - Dolar estadounidense</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="MXN">MXN - Peso mexicano</option>
+                        </select>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="reg-presupuesto">Presupuesto mensual</label>
+                        <input type="number" id="reg-presupuesto" class="glass-input" placeholder="Ej: 2000000" min="0" step="0.01" required>
                     </div>
                     <div class="password-strength" id="password-strength">
                         <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
-                        <span class="strength-text" id="strength-text">Seguridad de contraseña</span>
+                        <span class="strength-text" id="strength-text">Seguridad de contrasena</span>
                     </div>
                     <button type="submit" class="glass-btn glass-btn--primary glass-btn--lg glass-btn--block">
                         Crear Cuenta Segura
                     </button>
-                    <div class="auth-toggle">¿Ya tienes cuenta? <a onclick="toggleAuthForm('login')">Inicia sesión</a></div>
+                    <div class="auth-toggle">¿Ya tienes cuenta? <a onclick="toggleAuthForm('login')">Inicia sesion</a></div>
                 </form>
 
                 <div class="auth-compliance">
@@ -145,15 +182,15 @@
     <div id="dashboard" class="dashboard">
 
         <!-- Navbar -->
-        <nav class="glass-navbar">
+        <nav class="glass-navbar dashboard-nav">
             <div class="container">
                 <div class="navbar-brand">
                     <svg viewBox="0 0 28 28" width="24" height="24">
                         <defs><linearGradient id="nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#6C63FF"/><stop offset="100%" style="stop-color:#00B4D8"/>
+                            <stop offset="0%" style="stop-color:#FF007A"/><stop offset="100%" style="stop-color:#00E5FF"/>
                         </linearGradient></defs>
-                        <rect x="2" y="4" width="24" height="20" rx="4" fill="none" stroke="url(#nav-grad)" stroke-width="2"/>
-                        <path d="M14 8 C11 8, 9 10, 9 12 C9 13.5, 10.5 14.5, 12.5 15 C14.5 15.5, 16 16.5, 16 18 C16 19.5, 14.5 20.5, 12.5 20.5 M14 7 L14 8 M14 20.5 L14 21.5" stroke="url(#nav-grad)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                        <circle cx="14" cy="14" r="11" fill="none" stroke="url(#nav-grad)" stroke-width="2"/>
+                        <text x="14" y="18" text-anchor="middle" fill="url(#nav-grad)" font-size="12" font-weight="800" font-family="Inter, sans-serif">C</text>
                     </svg>
                     ControlCash
                 </div>
@@ -161,15 +198,20 @@
                     <span class="navbar-user" id="navbar-user"></span>
 
                     <!-- Toggle modo claro/oscuro -->
-                    <button class="glass-btn glass-btn--sm" id="btn-toggle-modo" title="Cambiar tema">☀️</button>
+                    <button class="glass-btn glass-btn--sm" id="btn-toggle-modo" title="Cambiar tema">
+                        <span class="btn-icon-emoji">☀️</span>
+                    </button>
 
                     <!-- Campana de notificaciones -->
                     <button class="glass-btn glass-btn--sm notification-badge" onclick="toggleNotificationPanel()" id="notif-btn">
-                        🔔
+                        <span class="btn-icon-emoji">🔔</span>
                         <span class="badge-count" id="notif-count" style="display:none">0</span>
                     </button>
 
-                    <button class="glass-btn glass-btn--sm" onclick="cerrarSesion()">Salir</button>
+                    <button class="glass-btn glass-btn--sm btn-icon-label" onclick="if(confirm('¿Cerrar sesion?')) cerrarSesion()">
+                        <span class="btn-icon-emoji">🚪</span>
+                        <span class="btn-label-text">Salir</span>
+                    </button>
                 </div>
             </div>
         </nav>
@@ -177,59 +219,95 @@
         <!-- Notification Panel -->
         <div id="notification-panel" class="glass-panel notification-panel glass-panel--static"></div>
 
+        <!-- Dashboard Menu (desktop) -->
+        <div class="container">
+            <div id="dashboard-menu" class="dashboard-menu" style="margin-top: var(--space-lg);">
+                <button class="dashboard-menu-btn active" data-target="overview">Inicio</button>
+                <button class="dashboard-menu-btn" data-target="presupuestos">Presupuestos</button>
+                <button class="dashboard-menu-btn" data-target="reportes">Reportes</button>
+                <button class="dashboard-menu-btn" data-target="categorias">Categorias</button>
+                <button class="dashboard-menu-btn" data-target="movimientos">Historial</button>
+                <button class="dashboard-menu-btn" data-target="profile">Perfil</button>
+            </div>
+        </div>
+
         <div class="container">
 
-            <!-- ========== SECCIÓN: Balance ========== -->
-            <section class="dashboard-section slide-up" style="animation-delay: 0.1s">
+            <!-- ========== SECCION: Overview ========== -->
+            <section class="dashboard-section" data-section-id="overview">
+                <!-- Balance Card -->
                 <div class="glass-panel balance-card glass-panel--static">
-                    <p class="balance-label">Balance Disponible</p>
+                    <p class="balance-label">BALANCE DISPONIBLE</p>
                     <h2 class="balance-amount positive" id="balance-total">$0.00</h2>
                     <div class="balance-details">
                         <div class="balance-detail">
-                            <p class="balance-detail-label">Ingresos</p>
+                            <p class="balance-detail-label">INGRESOS</p>
                             <p class="balance-detail-value income" id="balance-ingresos">$0.00</p>
                         </div>
                         <div class="balance-detail">
-                            <p class="balance-detail-label">Gastos</p>
+                            <p class="balance-detail-label">GASTOS</p>
                             <p class="balance-detail-value expense" id="balance-gastos">$0.00</p>
                         </div>
                         <div class="balance-detail">
-                            <p class="balance-detail-label">Movimientos</p>
+                            <p class="balance-detail-label">MOVIMIENTOS</p>
                             <p class="balance-detail-value" id="balance-movimientos">0</p>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- ========== SECCIÓN: Acciones rápidas ========== -->
-            <section class="dashboard-section slide-up" style="animation-delay: 0.2s">
-                <div class="flex flex--between" style="margin-bottom: var(--space-md);">
-                    <h3 class="section-title" style="margin-bottom: 0;">Acciones</h3>
+                <!-- Home Presupuesto Card -->
+                <div id="home-presupuesto-card" class="glass-panel home-budget-card glass-panel--static" style="margin-top: var(--space-md); display: none;">
+                    <div class="home-budget-header">
+                        <span class="home-budget-title">Presupuesto del mes</span>
+                        <span id="home-budget-pct" class="home-budget-pct ok">0%</span>
+                    </div>
+                    <div class="budget-track">
+                        <div id="home-budget-fill" class="budget-fill ok" style="width: 0%"></div>
+                    </div>
+                    <div class="home-budget-values">
+                        <span id="home-budget-gastado">Gastado: $0.00</span>
+                        <span id="home-budget-limite">Limite: $0.00</span>
+                    </div>
                 </div>
-                <div class="grid grid--2">
-                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalMovimiento('ingreso')" style="cursor:pointer; text-align:left; border:none;">
-                        <div class="stat-icon stat-icon--success">📥</div>
-                        <div class="stat-info"><h4>Nuevo Ingreso</h4><p style="color: var(--color-success);">Registrar entrada</p></div>
-                    </button>
-                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalMovimiento('gasto')" style="cursor:pointer; text-align:left; border:none;">
-                        <div class="stat-icon stat-icon--danger">📤</div>
-                        <div class="stat-info"><h4>Nuevo Gasto</h4><p style="color: var(--color-danger);">Registrar salida</p></div>
-                    </button>
-                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalOCR()" style="cursor:pointer; text-align:left; border:none;">
-                        <div class="stat-icon" style="background: rgba(168,85,247,0.15); color: #a855f7;">📷</div>
-                        <div class="stat-info"><h4>Escanear Recibo</h4><p style="color: #a855f7;">OCR con IA</p></div>
-                    </button>
-                    <button class="glass-panel stat-card glass-panel--static" onclick="abrirModalChat()" style="cursor:pointer; text-align:left; border:none;">
-                        <div class="stat-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">🤖</div>
-                        <div class="stat-info"><h4>Asistente IA</h4><p style="color: #3b82f6;">Chat financiero</p></div>
-                    </button>
-                </div>
-            </section>
 
-            <!-- ========== SECCIÓN: Perfil IA ========== -->
-            <section class="dashboard-section slide-up" id="seccion-perfil-ia" style="animation-delay: 0.25s">
-                <h3 class="section-title">🧠 Tu Perfil Financiero (IA)</h3>
-                <div class="glass-panel perfil-ia-card glass-panel--static" style="position: relative;">
+                <!-- Quick Action Cards -->
+                <div class="modulos-nequi-grid" style="margin-top: var(--space-lg);">
+                    <button class="glass-panel stat-card glass-panel--static modulo-nequi-btn" onclick="abrirModuloHome('movimientos')">
+                        <div class="modulo-nequi-icon">📋</div>
+                        <div class="modulo-nequi-title">Historial</div>
+                        <div class="modulo-nequi-subtitle">Movimientos</div>
+                    </button>
+                    <button class="glass-panel stat-card glass-panel--static modulo-nequi-btn" onclick="abrirModuloHome('presupuestos')">
+                        <div class="modulo-nequi-icon">📊</div>
+                        <div class="modulo-nequi-title">Presupuesto</div>
+                        <div class="modulo-nequi-subtitle">Control mes</div>
+                    </button>
+                    <button class="glass-panel stat-card glass-panel--static modulo-nequi-btn" onclick="abrirModuloHome('reportes')">
+                        <div class="modulo-nequi-icon">📈</div>
+                        <div class="modulo-nequi-title">Reportes</div>
+                        <div class="modulo-nequi-subtitle">Detalle</div>
+                    </button>
+                </div>
+
+                <!-- Asistente IA Financiero -->
+                <div class="glass-panel assistant-mini-card glass-panel--static" style="margin-top: var(--space-md);" onclick="abrirModalChat()">
+                    <div class="assistant-mini-main">
+                        <div>
+                            <div class="assistant-mini-title">🤖 Asistente IA Financiero</div>
+                            <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 2px;">Pregunta sobre tus gastos, ahorro y mas</div>
+                        </div>
+                        <span class="assistant-mini-arrow">›</span>
+                    </div>
+                    <div style="margin-top: var(--space-xs);">
+                        <span id="ia-status-badge" class="ia-status-badge" style="display:none;">
+                            <span>⚡</span> IA activa
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Perfil Financiero (IA) -->
+                <div class="glass-panel perfil-ia-card glass-panel--static" style="margin-top: var(--space-lg);" id="seccion-perfil-ia">
+                    <h3 class="section-title" style="margin-bottom: var(--space-md);">🧠 Tu Perfil Financiero (IA)</h3>
 
                     <!-- Skeleton loader -->
                     <div id="perfil-skeleton" class="skeleton-overlay" style="display: flex;">
@@ -272,96 +350,124 @@
                         <div id="perfil-detalles" class="perfil-detalles"></div>
                     </div>
                 </div>
-            </section>
 
-            <!-- ========== SECCIÓN: Resumen del mes ========== -->
-            <section class="dashboard-section slide-up" style="animation-delay: 0.3s">
-                <h3 class="section-title">📊 Resumen del Mes</h3>
+                <!-- Resumen del Mes -->
+                <div class="glass-panel resumen-mini-card glass-panel--static" style="margin-top: var(--space-lg);">
+                    <div class="resumen-mini-header">
+                        <h3 class="section-title" style="margin:0;">📊 Resumen del Mes</h3>
+                        <button id="btn-resumen-detalle" class="glass-btn glass-btn--sm" onclick="toggleDetalleResumen()" style="display:none;">Ver detalle</button>
+                    </div>
 
-                <!-- Métricas -->
-                <div class="metrics-grid" id="resumen-metricas">
-                    <div class="glass-panel metric-card glass-panel--static">
-                        <span class="metric-icon">📉</span>
-                        <span class="metric-label">Promedio diario</span>
-                        <span class="metric-value" id="metric-promedio">$0.00</span>
-                    </div>
-                    <div class="glass-panel metric-card glass-panel--static">
-                        <span class="metric-icon">🔮</span>
-                        <span class="metric-label">Proyección 30d</span>
-                        <span class="metric-value" id="metric-proyeccion">$0.00</span>
-                    </div>
-                    <div class="glass-panel metric-card glass-panel--static">
-                        <span class="metric-icon">📊</span>
-                        <span class="metric-label">vs. periodo anterior</span>
-                        <span class="metric-value" id="metric-variacion">0%</span>
-                    </div>
-                    <div class="glass-panel metric-card glass-panel--static">
-                        <span class="metric-icon">🔢</span>
-                        <span class="metric-label">Movimientos</span>
-                        <span class="metric-value" id="metric-movimientos">0</span>
-                    </div>
-                </div>
-
-                <!-- Top 3 gastos -->
-                <div class="glass-panel glass-panel--static" id="top-gastos" style="margin-bottom: var(--space-md); display: none;">
-                    <h4 style="margin-bottom: var(--space-sm); font-size: var(--font-size-sm); color: var(--glass-text-secondary);">🔥 Top 3 Gastos</h4>
-                    <div id="top-gastos-list"></div>
-                </div>
-
-                <!-- Charts: Donut + Línea de tendencia -->
-                <div class="charts-grid">
-                    <div class="glass-panel chart-container glass-panel--static">
-                        <h4 class="chart-title">Gastos por Categoría</h4>
-                        <div class="chart-canvas-wrapper">
-                            <canvas id="chart-categorias"></canvas>
+                    <div class="resumen-inline-metrics">
+                        <div class="mini-metric">
+                            <span class="mini-metric-label">PROM/DIA</span>
+                            <span class="mini-metric-value" id="metric-promedio">$0.00</span>
+                        </div>
+                        <div class="mini-metric">
+                            <span class="mini-metric-label">PROY30</span>
+                            <span class="mini-metric-value" id="metric-proyeccion">$0.00</span>
+                        </div>
+                        <div class="mini-metric">
+                            <span class="mini-metric-label">VS ANT</span>
+                            <span class="mini-metric-value" id="metric-variacion">0%</span>
+                        </div>
+                        <div class="mini-metric">
+                            <span class="mini-metric-label">MOV</span>
+                            <span class="mini-metric-value" id="metric-movimientos">0</span>
                         </div>
                     </div>
-                    <div class="glass-panel chart-container glass-panel--static">
-                        <h4 class="chart-title">Tendencia Diaria (30 días)</h4>
-                        <div class="chart-canvas-wrapper">
-                            <canvas id="chart-tendencia"></canvas>
+
+                    <div id="resumen-empty-state" class="empty-state resumen-empty-state" style="display:none;">
+                        <div class="empty-icon">📊</div>
+                        <p>Sin datos suficientes para el resumen</p>
+                    </div>
+
+                    <div id="resumen-detalle-panel" class="resumen-detalle-panel">
+                        <!-- Top 3 gastos -->
+                        <div class="glass-panel glass-panel--static" id="top-gastos" style="margin-top: var(--space-md); display: none;">
+                            <h4 style="margin-bottom: var(--space-sm); font-size: var(--font-size-sm); color: var(--glass-text-secondary);">🔥 Top 3 Gastos</h4>
+                            <div id="top-gastos-list"></div>
                         </div>
+
+                        <!-- Charts -->
+                        <div class="charts-grid" style="margin-top: var(--space-md);">
+                            <div class="glass-panel chart-container glass-panel--static">
+                                <h4 class="chart-title">Gastos por Categoria</h4>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-categorias"></canvas>
+                                </div>
+                            </div>
+                            <div class="glass-panel chart-container glass-panel--static">
+                                <h4 class="chart-title">Tendencia Diaria (30 dias)</h4>
+                                <div class="chart-canvas-wrapper">
+                                    <canvas id="chart-tendencia"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Onboarding card -->
+                <div id="onboarding-card" class="glass-panel onboarding-card glass-panel--static" style="margin-top: var(--space-lg); display: none;">
+                    <div class="onboarding-header">
+                        <div>
+                            <h3 class="section-title" style="margin:0;">✨ Bienvenido a ControlCash</h3>
+                            <p class="onboarding-hint">Empieza a organizar tu dinero en 3 pasos</p>
+                        </div>
+                        <button class="glass-btn glass-btn--sm" onclick="cerrarOnboarding(true)">Omitir</button>
+                    </div>
+                    <div class="onboarding-actions">
+                        <button class="glass-btn glass-btn--primary" onclick="abrirModalMovimiento('ingreso')">1. Registrar ingreso</button>
+                        <button class="glass-btn glass-btn--primary" onclick="abrirModalMovimiento('gasto')">2. Registrar gasto</button>
+                        <button class="glass-btn glass-btn--primary" onclick="abrirModuloHome('presupuestos')">3. Crear presupuesto</button>
                     </div>
                 </div>
             </section>
 
-            <!-- ========== SECCIÓN: Movimientos recientes ========== -->
-            <section class="dashboard-section slide-up" style="animation-delay: 0.4s">
-                <div class="flex flex--between" style="margin-bottom: var(--space-md);">
-                    <h3 class="section-title" style="margin-bottom: 0;">Movimientos Recientes</h3>
-                    <div class="flex" style="gap: var(--space-sm);">
+            <!-- ========== SECCION: Movimientos ========== -->
+            <section class="dashboard-section section-hidden" data-section-id="movimientos">
+                <div class="movimientos-header">
+                    <div class="flex flex--between" style="margin-bottom: var(--space-md);">
+                        <h3 class="section-title" style="margin-bottom: 0;">Movimientos Recientes</h3>
                         <button class="glass-btn glass-btn--sm" onclick="exportarCSV()" title="Exportar CSV">📥 CSV</button>
+                    </div>
+                    <div class="movimientos-row movimientos-row--tabs">
                         <div class="glass-tabs">
                             <button class="glass-tab active" onclick="filtrarMovimientos('todos', this)">Todos</button>
                             <button class="glass-tab" onclick="filtrarMovimientos('ingreso', this)">Ingresos</button>
                             <button class="glass-tab" onclick="filtrarMovimientos('gasto', this)">Gastos</button>
                         </div>
                     </div>
+                    <div class="movimientos-row movimientos-row--chips">
+                        <button id="filtros-chevron" class="glass-btn glass-btn--sm btn-filtros-toggle-pill" onclick="toggleFiltros()">
+                            <span>🔽 Filtros</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Filtros avanzados -->
-                <div class="glass-panel filtros-avanzados glass-panel--static">
-                    <div class="filtros-row">
-                        <div class="filtro-grupo">
+                <div id="filtros-inline-panel" class="glass-panel filtros-avanzados glass-panel--static filtros-inline-panel collapsed">
+                    <div class="filtros-row filtros-row--inline">
+                        <div class="filtro-grupo filtro-grupo--chip">
                             <label class="filtro-label">Desde</label>
                             <input type="date" id="filtro-desde" class="glass-input glass-input--sm">
                         </div>
-                        <div class="filtro-grupo">
+                        <div class="filtro-grupo filtro-grupo--chip">
                             <label class="filtro-label">Hasta</label>
                             <input type="date" id="filtro-hasta" class="glass-input glass-input--sm">
                         </div>
-                        <div class="filtro-grupo">
-                            <label class="filtro-label">Categoría</label>
+                        <div class="filtro-grupo filtro-grupo--chip">
+                            <label class="filtro-label">Categoria</label>
                             <select id="filtro-categoria" class="glass-input glass-select glass-input--sm">
                                 <option value="">Todas</option>
                             </select>
                         </div>
-                        <div class="filtro-grupo">
-                            <label class="filtro-label">Monto mín</label>
+                        <div class="filtro-grupo filtro-grupo--chip">
+                            <label class="filtro-label">Monto min</label>
                             <input type="number" id="filtro-monto-min" class="glass-input glass-input--sm" placeholder="$0" min="0">
                         </div>
-                        <div class="filtro-grupo">
-                            <label class="filtro-label">Monto máx</label>
+                        <div class="filtro-grupo filtro-grupo--chip">
+                            <label class="filtro-label">Monto max</label>
                             <input type="number" id="filtro-monto-max" class="glass-input glass-input--sm" placeholder="∞" min="0">
                         </div>
                         <div class="filtro-acciones">
@@ -377,15 +483,382 @@
                         <p>No hay movimientos registrados</p>
                     </div>
                 </div>
+
+                <!-- Paginacion -->
+                <div id="movimientos-paginacion" class="pagination-controls" style="display:none;">
+                    <button id="mov-page-prev" class="glass-btn glass-btn--sm">‹ Prev</button>
+                    <span id="mov-page-info" class="pagination-info">Pagina 1 de 1</span>
+                    <button id="mov-page-next" class="glass-btn glass-btn--sm">Next ›</button>
+                </div>
+
+                <div class="movimientos-footer-row">
+                    <button id="btn-toggle-movimientos" class="glass-btn glass-btn--sm btn-ver-todos" onclick="toggleVistaMovimientos()" style="display:none;">Ver todos →</button>
+                </div>
+            </section>
+
+            <!-- ========== SECCION: Presupuestos ========== -->
+            <section class="dashboard-section section-hidden" data-section-id="presupuestos">
+                <h3 class="section-title">📊 Presupuestos</h3>
+
+                <div class="glass-panel glass-panel--static" style="padding: var(--space-md); margin-bottom: var(--space-md);">
+                    <div class="flex flex--between" style="flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+                        <div class="filtro-grupo" style="flex: 1; min-width: 140px;">
+                            <label class="filtro-label">Mes</label>
+                            <input type="month" id="presupuesto-filtro-mes" class="glass-input glass-input--sm">
+                        </div>
+                    </div>
+                    <div id="presupuestos-lista"></div>
+                </div>
+
+                <!-- Comparativo -->
+                <div class="glass-panel budget-comparativo glass-panel--static" style="margin-bottom: var(--space-md);">
+                    <div class="budget-comparativo-header">
+                        <div>
+                            <div class="budget-comparativo-title">Comparativo vs mes anterior</div>
+                            <div class="budget-comparativo-subtitle">Variacion de gastos</div>
+                        </div>
+                        <div class="filtro-grupo" style="min-width: 160px;">
+                            <select id="presupuesto-comparativo-categoria" class="glass-input glass-select glass-input--sm">
+                                <option value="">🌐 Global</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="presupuesto-comparativo-resumen" class="budget-comparativo-resumen"></div>
+                </div>
+
+                <!-- Formulario presupuesto -->
+                <div class="glass-panel glass-panel--static" style="padding: var(--space-lg); margin-bottom: var(--space-md);">
+                    <h4 style="margin-bottom: var(--space-md); font-size: var(--font-size-sm); color: var(--text-secondary);">Crear / editar presupuesto</h4>
+                    <form id="form-presupuesto">
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="presupuesto-mes">Mes</label>
+                                <input type="month" id="presupuesto-mes" class="glass-input glass-input--sm" required>
+                            </div>
+                            <div class="glass-input-group">
+                                <label for="presupuesto-monto">Monto limite</label>
+                                <input type="number" id="presupuesto-monto" class="glass-input glass-input--sm" placeholder="0.00" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="glass-input-group">
+                            <label for="presupuesto-categoria">Categoria (opcional)</label>
+                            <select id="presupuesto-categoria" class="glass-input glass-select">
+                                <option value="">🌐 Global (todas las categorias)</option>
+                            </select>
+                        </div>
+                        <div class="profile-form-actions">
+                            <button type="submit" id="btn-guardar-presupuesto" class="glass-btn glass-btn--primary">Guardar presupuesto</button>
+                            <button type="button" class="glass-btn" onclick="limpiarFormularioPresupuesto()">Limpiar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Recurrencias -->
+                <h3 class="section-title">🔁 Automatizaciones</h3>
+                <div id="recurrencias-lista" style="margin-bottom: var(--space-md);"></div>
+                <div class="glass-panel glass-panel--static" style="padding: var(--space-lg); margin-bottom: var(--space-md);">
+                    <h4 style="margin-bottom: var(--space-md); font-size: var(--font-size-sm); color: var(--text-secondary);">Nueva automatizacion</h4>
+                    <form id="form-recurrencia">
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="rec-tipo">Tipo</label>
+                                <select id="rec-tipo" class="glass-input glass-select">
+                                    <option value="gasto">Gasto</option>
+                                    <option value="ingreso">Ingreso</option>
+                                </select>
+                            </div>
+                            <div class="glass-input-group">
+                                <label for="rec-categoria">Categoria</label>
+                                <select id="rec-categoria" class="glass-input glass-select" required>
+                                    <option value="">Seleccionar categoria</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="rec-monto">Monto</label>
+                                <input type="number" id="rec-monto" class="glass-input" placeholder="0.00" step="0.01" min="0.01" required>
+                            </div>
+                            <div class="glass-input-group">
+                                <label for="rec-frecuencia">Frecuencia</label>
+                                <select id="rec-frecuencia" class="glass-input glass-select" onchange="actualizarRecurrenciaForm()">
+                                    <option value="mensual">Mensual</option>
+                                    <option value="semanal">Semanal</option>
+                                    <option value="quincenal">Quincenal</option>
+                                    <option value="anual">Anual</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="glass-input-group">
+                            <label for="rec-descripcion">Descripcion</label>
+                            <input type="text" id="rec-descripcion" class="glass-input" placeholder="Ej: Pago de arriendo" required>
+                        </div>
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="rec-proxima-fecha">Proxima fecha</label>
+                                <input type="date" id="rec-proxima-fecha" class="glass-input" required>
+                            </div>
+                            <div class="glass-input-group" id="rec-dia-ejecucion-wrap">
+                                <label for="rec-dia-ejecucion">Dia de ejecucion (1-31)</label>
+                                <input type="number" id="rec-dia-ejecucion" class="glass-input" placeholder="1" min="1" max="31">
+                            </div>
+                        </div>
+                        <div class="profile-form-actions">
+                            <button type="submit" class="glass-btn glass-btn--primary">Crear automatizacion</button>
+                            <button type="button" id="btn-ejecutar-recurrencias" class="glass-btn glass-btn--success">Ejecutar ahora</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ========== SECCION: Reportes ========== -->
+            <section class="dashboard-section section-hidden" data-section-id="reportes">
+                <div class="reportes-header">
+                    <div>
+                        <h3 class="section-title" style="margin-bottom: var(--space-xs);">📈 Reportes</h3>
+                        <div class="reportes-subtitle">Analisis por periodo</div>
+                    </div>
+                    <div class="filtro-grupo" style="min-width: 160px;">
+                        <select id="reportes-periodo" class="glass-input glass-select glass-input--sm">
+                            <option value="mensual">Mensual</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="glass-panel glass-panel--static" style="padding: var(--space-lg); margin-bottom: var(--space-md);">
+                    <div class="reportes-range" id="reportes-rango" style="margin-bottom: var(--space-md); font-size: var(--font-size-sm); color: var(--text-secondary);">--</div>
+                    <div class="reportes-metrics" style="margin-bottom: var(--space-lg);">
+                        <div class="reportes-metric">
+                            <span>Ingresos</span>
+                            <strong id="reportes-total-ingresos">$0.00</strong>
+                        </div>
+                        <div class="reportes-metric">
+                            <span>Gastos</span>
+                            <strong id="reportes-total-gastos">$0.00</strong>
+                        </div>
+                        <div class="reportes-metric">
+                            <span>Movimientos</span>
+                            <strong id="reportes-total-movimientos">0</strong>
+                        </div>
+                    </div>
+
+                    <h4 class="reportes-title">Top categorias</h4>
+                    <div id="reportes-top-list"></div>
+                </div>
+
+                <div class="flex flex--gap" style="justify-content: flex-end; margin-bottom: var(--space-md);">
+                    <button id="btn-exportar-pdf" class="glass-btn glass-btn--sm">📄 Exportar PDF</button>
+                    <button id="btn-exportar-excel" class="glass-btn glass-btn--sm">📊 Exportar Excel</button>
+                </div>
+            </section>
+
+            <!-- ========== SECCION: Categorias ========== -->
+            <section class="dashboard-section section-hidden" data-section-id="categorias">
+                <h3 class="section-title">🏷️ Categorias</h3>
+
+                <div class="glass-panel glass-panel--static" style="padding: var(--space-lg); margin-bottom: var(--space-md);">
+                    <h4 id="categoria-form-title" style="margin-bottom: var(--space-md); font-size: var(--font-size-sm); color: var(--text-secondary);">Crear categoria</h4>
+                    <form id="form-categoria">
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="categoria-nombre">Nombre</label>
+                                <input type="text" id="categoria-nombre" class="glass-input" placeholder="Ej: Transporte" required>
+                            </div>
+                            <div class="glass-input-group">
+                                <label for="categoria-tipo">Tipo</label>
+                                <select id="categoria-tipo" class="glass-input glass-select">
+                                    <option value="gasto">Gasto</option>
+                                    <option value="ingreso">Ingreso</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="glass-input-group">
+                            <label>Icono</label>
+                            <div id="categoria-icon-picker" class="icon-picker">
+                                <button type="button" class="icon-option" data-icon="💼">💼</button>
+                                <button type="button" class="icon-option" data-icon="💻">💻</button>
+                                <button type="button" class="icon-option" data-icon="📈">📈</button>
+                                <button type="button" class="icon-option" data-icon="🍔">🍔</button>
+                                <button type="button" class="icon-option" data-icon="🚗">🚗</button>
+                                <button type="button" class="icon-option" data-icon="🏠">🏠</button>
+                                <button type="button" class="icon-option" data-icon="💡">💡</button>
+                                <button type="button" class="icon-option" data-icon="🏥">🏥</button>
+                                <button type="button" class="icon-option" data-icon="📚">📚</button>
+                                <button type="button" class="icon-option" data-icon="🎮">🎮</button>
+                                <button type="button" class="icon-option" data-icon="👕">👕</button>
+                                <button type="button" class="icon-option" data-icon="📦">📦</button>
+                                <button type="button" class="icon-option" data-icon="💳">💳</button>
+                                <button type="button" class="icon-option" data-icon="🧾">🧾</button>
+                                <button type="button" class="icon-option" data-icon="🎯">🎯</button>
+                                <button type="button" class="icon-option" data-icon="🛠️">🛠️</button>
+                            </div>
+                            <input type="text" id="categoria-icono" class="glass-input" placeholder="O escribe un emoji personalizado" maxlength="10">
+                        </div>
+                        <div class="glass-input-group">
+                            <label for="categoria-descripcion">Descripcion (opcional)</label>
+                            <input type="text" id="categoria-descripcion" class="glass-input" placeholder="Breve descripcion">
+                        </div>
+                        <div class="profile-form-actions">
+                            <button type="submit" id="btn-guardar-categoria" class="glass-btn glass-btn--primary">Guardar categoria</button>
+                            <button type="button" class="glass-btn" onclick="cancelarEdicionCategoria()">Cancelar edicion</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="categorias-lista"></div>
+            </section>
+
+            <!-- ========== SECCION: Perfil ========== -->
+            <section class="dashboard-section section-hidden" data-section-id="profile">
+                <h3 class="section-title">👤 Perfil</h3>
+
+                <div class="glass-panel profile-card glass-panel--static">
+                    <div class="profile-header">
+                        <div id="profile-avatar" class="profile-avatar-lg">U</div>
+                        <div class="profile-user-info">
+                            <div id="profile-nombre" class="profile-user-name">Cargando...</div>
+                            <div id="profile-email" class="profile-user-email">--</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-data-grid">
+                        <div class="profile-data-item">
+                            <div class="profile-data-label">Moneda</div>
+                            <div id="profile-moneda" class="profile-data-value">COP</div>
+                        </div>
+                        <div class="profile-data-item">
+                            <div class="profile-data-label">Miembro desde</div>
+                            <div id="profile-fecha" class="profile-data-value">--</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section-title">✏️ Editar perfil</div>
+                    <form id="form-editar-perfil" class="profile-form" onsubmit="guardarPerfil(event)">
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="perfil-nombre">Nombre</label>
+                                <input type="text" id="perfil-nombre" class="glass-input" placeholder="Tu nombre" required>
+                            </div>
+                            <div class="glass-input-group">
+                                <label for="perfil-moneda">Moneda</label>
+                                <select id="perfil-moneda" class="glass-input glass-select">
+                                    <option value="COP">COP</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="MXN">MXN</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="perfil-edit-error" class="error-message"></div>
+                        <div class="profile-form-actions">
+                            <button type="submit" id="btn-guardar-perfil" class="glass-btn glass-btn--primary">Guardar cambios</button>
+                        </div>
+                    </form>
+
+                    <hr class="profile-divider">
+
+                    <div class="profile-section-title">🔒 Cambiar contrasena</div>
+                    <form id="form-cambiar-password" class="profile-form" onsubmit="cambiarPassword(event)">
+                        <div class="glass-input-group">
+                            <label for="perfil-password-actual">Contrasena actual</label>
+                            <div class="password-input-wrap">
+                                <input type="password" id="perfil-password-actual" class="glass-input" placeholder="••••••••" required>
+                                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('perfil-password-actual', this)" aria-label="Mostrar contrasena">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="profile-form-row">
+                            <div class="glass-input-group">
+                                <label for="perfil-password-nueva">Nueva contrasena</label>
+                                <div class="password-input-wrap">
+                                    <input type="password" id="perfil-password-nueva" class="glass-input" placeholder="Minimo 8 caracteres" required>
+                                    <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('perfil-password-nueva', this)" aria-label="Mostrar contrasena">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="glass-input-group">
+                                <label for="perfil-password-confirmar">Confirmar nueva</label>
+                                <div class="password-input-wrap">
+                                    <input type="password" id="perfil-password-confirmar" class="glass-input" placeholder="Repite la nueva" required>
+                                    <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('perfil-password-confirmar', this)" aria-label="Mostrar contrasena">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="password-change-error" class="error-message"></div>
+                        <div class="profile-form-actions">
+                            <button type="submit" id="btn-cambiar-password" class="glass-btn glass-btn--primary">Cambiar contrasena</button>
+                        </div>
+                    </form>
+                </div>
             </section>
 
         </div><!-- /container -->
+
+        <!-- Bottom Nav (mobile) -->
+        <nav class="bottom-nav glass-panel glass-panel--static">
+            <button class="bottom-nav-btn active" data-target="overview" onclick="navegarVistaPrincipal('overview')">
+                <span class="bottom-nav-icon">🏠</span>
+                <span>Inicio</span>
+            </button>
+            <button class="bottom-nav-btn" data-target="movimientos" onclick="navegarVistaPrincipal('movimientos')">
+                <span class="bottom-nav-icon">📋</span>
+                <span>Historial</span>
+            </button>
+            <button class="bottom-nav-btn" data-target="profile" onclick="navegarVistaPrincipal('profile')">
+                <span class="bottom-nav-icon">👤</span>
+                <span>Perfil</span>
+            </button>
+            <button class="bottom-nav-btn" data-target="settings" onclick="navegarVistaPrincipal('settings')">
+                <span class="bottom-nav-icon">⚙️</span>
+                <span>Ajustes</span>
+            </button>
+        </nav>
+
     </div><!-- /dashboard -->
+
+    <!-- ============================================================
+         FAB & SHEET
+         ============================================================ -->
+    <button id="fab-acciones" class="fab-acciones" onclick="toggleFabAcciones()">
+        <span id="fab-acciones-icon">＋</span>
+    </button>
+
+    <div id="transacciones-sheet-overlay" class="sheet-overlay" onclick="if(event.target===this) cerrarSheetTransacciones()">
+        <div class="glass-panel sheet-panel glass-panel--static">
+            <div class="sheet-header">
+                <h3>Acciones</h3>
+                <button class="glass-btn glass-btn--sm" onclick="cerrarSheetTransacciones()">✕</button>
+            </div>
+            <div class="sheet-actions">
+                <button class="glass-btn glass-btn--primary" onclick="abrirTransaccionDesdeSheet('gasto')">
+                    <span>📤</span> Registrar Gasto
+                </button>
+                <button class="glass-btn glass-btn--success" onclick="abrirTransaccionDesdeSheet('ingreso')">
+                    <span>📥</span> Registrar Ingreso
+                </button>
+                <button class="glass-btn" onclick="abrirOCRDesdeSheet()">
+                    <span>📷</span> Escanear Recibo (OCR)
+                </button>
+                <button class="glass-btn" onclick="abrirChatDesdeSheet()">
+                    <span>🤖</span> Hablar con IA (Chat)
+                </button>
+                <button class="glass-btn" onclick="abrirCategoriasDesdeSheet()">
+                    <span>🏷️</span> Gestionar Categorias
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================
          MODAL: Nuevo Movimiento
          ============================================================ -->
-    <div id="modal-movimiento" class="glass-modal-overlay">
+    <div id="modal-movimiento" class="glass-modal-overlay" onclick="if(event.target===this) cerrarModal('modal-movimiento')">
         <div class="glass-modal">
             <div class="glass-modal-header">
                 <h2 id="modal-movimiento-titulo">Nuevo Movimiento</h2>
@@ -396,18 +869,18 @@
                 <form id="form-movimiento">
                     <input type="hidden" id="mov-tipo" value="gasto">
                     <div class="glass-input-group">
-                        <label for="mov-monto">Monto ($)</label>
+                        <label for="mov-monto">Monto</label>
                         <input type="number" id="mov-monto" class="glass-input" placeholder="0.00" step="0.01" min="0.01" required>
                     </div>
                     <div class="glass-input-group">
-                        <label for="mov-categoria">Categoría</label>
+                        <label for="mov-categoria">Categoria</label>
                         <select id="mov-categoria" class="glass-input glass-select" required>
-                            <option value="">Seleccionar categoría</option>
+                            <option value="">Seleccionar categoria</option>
                         </select>
                     </div>
                     <div class="glass-input-group">
-                        <label for="mov-descripcion">Descripción (opcional)</label>
-                        <input type="text" id="mov-descripcion" class="glass-input" placeholder="Descripción del movimiento" maxlength="500">
+                        <label for="mov-descripcion">Descripcion (opcional)</label>
+                        <input type="text" id="mov-descripcion" class="glass-input" placeholder="Descripcion del movimiento" maxlength="500">
                     </div>
                     <div class="glass-input-group">
                         <label for="mov-fecha">Fecha</label>
@@ -422,9 +895,9 @@
     </div>
 
     <!-- ============================================================
-         MODAL: Editar Movimiento (NUEVO)
+         MODAL: Editar Movimiento
          ============================================================ -->
-    <div id="modal-editar-movimiento" class="glass-modal-overlay">
+    <div id="modal-editar-movimiento" class="glass-modal-overlay" onclick="if(event.target===this) cerrarModal('modal-editar-movimiento')">
         <div class="glass-modal">
             <div class="glass-modal-header">
                 <h2 id="modal-editar-titulo">✏️ Editar Movimiento</h2>
@@ -435,18 +908,18 @@
                 <form id="form-editar-movimiento">
                     <input type="hidden" id="edit-mov-tipo" value="gasto">
                     <div class="glass-input-group">
-                        <label for="edit-mov-monto">Monto ($)</label>
+                        <label for="edit-mov-monto">Monto</label>
                         <input type="number" id="edit-mov-monto" class="glass-input" placeholder="0.00" step="0.01" min="0.01" required>
                     </div>
                     <div class="glass-input-group">
-                        <label for="edit-mov-categoria">Categoría</label>
+                        <label for="edit-mov-categoria">Categoria</label>
                         <select id="edit-mov-categoria" class="glass-input glass-select" required>
-                            <option value="">Seleccionar categoría</option>
+                            <option value="">Seleccionar categoria</option>
                         </select>
                     </div>
                     <div class="glass-input-group">
-                        <label for="edit-mov-descripcion">Descripción (opcional)</label>
-                        <input type="text" id="edit-mov-descripcion" class="glass-input" placeholder="Descripción del movimiento" maxlength="500">
+                        <label for="edit-mov-descripcion">Descripcion (opcional)</label>
+                        <input type="text" id="edit-mov-descripcion" class="glass-input" placeholder="Descripcion del movimiento" maxlength="500">
                     </div>
                     <div class="glass-input-group">
                         <label for="edit-mov-fecha">Fecha</label>
@@ -461,9 +934,9 @@
     </div>
 
     <!-- ============================================================
-         MODAL: Confirmar Borrado (NUEVO)
+         MODAL: Confirmar Borrado
          ============================================================ -->
-    <div id="modal-confirmar-borrado" class="glass-modal-overlay">
+    <div id="modal-confirmar-borrado" class="glass-modal-overlay" onclick="if(event.target===this) cerrarModal('modal-confirmar-borrado')">
         <div class="glass-modal glass-modal--sm">
             <div class="glass-modal-header">
                 <h2>🗑️ Eliminar Movimiento</h2>
@@ -471,14 +944,14 @@
             </div>
             <div class="glass-modal-body">
                 <p style="text-align: center; margin-bottom: var(--space-lg); color: var(--text-secondary);">
-                    ¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.
+                    ¿Estas seguro de que deseas eliminar este movimiento? Esta accion no se puede deshacer.
                 </p>
                 <div class="flex" style="gap: var(--space-sm);">
                     <button id="btn-cancelar-borrado" class="glass-btn glass-btn--block" style="flex:1;">
                         Cancelar
                     </button>
                     <button id="btn-confirmar-borrado" class="glass-btn glass-btn--danger glass-btn--block" style="flex:1;">
-                        Sí, eliminar
+                        Si, eliminar
                     </button>
                 </div>
             </div>
@@ -488,11 +961,11 @@
     <!-- ============================================================
          MODAL: OCR
          ============================================================ -->
-    <div class="glass-modal-overlay" id="modal-ocr" onclick="if(event.target===this) cerrarModal('modal-ocr')">
+    <div id="modal-ocr" class="glass-modal-overlay" onclick="if(event.target===this) cerrarModal('modal-ocr')">
         <div class="glass-modal">
             <div class="glass-modal-header">
                 <h2>📷 Escanear Recibo</h2>
-                <button class="btn-close" onclick="cerrarModal('modal-ocr')" aria-label="Cerrar">&times;</button>
+                <button class="glass-modal-close" onclick="cerrarModal('modal-ocr')">&times;</button>
             </div>
             <div class="glass-modal-body">
                 <div class="ocr-upload-area" id="ocr-drop-zone">
@@ -500,17 +973,44 @@
                     <div class="ocr-placeholder" id="ocr-placeholder">
                         <span style="font-size: 3rem;">📷</span>
                         <p>Toca para tomar foto o seleccionar imagen</p>
-                        <p style="font-size: var(--font-size-xs); color: var(--glass-text-secondary);">Formatos: JPG, PNG (máx 10 MB)</p>
+                        <p style="font-size: var(--font-size-xs); color: var(--glass-text-secondary);">Formatos: JPG, PNG (max 10 MB)</p>
                     </div>
                     <img id="ocr-preview" style="display:none; max-width:100%; max-height:300px; border-radius: var(--radius-md);">
-                </div>
-                <div id="ocr-resultado" style="display:none; margin-top: var(--space-md);">
-                    <h4 style="margin-bottom: var(--space-sm);">Datos extraídos:</h4>
-                    <div id="ocr-datos"></div>
                 </div>
                 <div id="ocr-loading" style="display:none; text-align:center; padding: var(--space-lg);">
                     <div class="loading-spinner"></div>
                     <p style="margin-top: var(--space-sm);">Analizando recibo con IA...</p>
+                </div>
+                <div id="ocr-resultado" style="display:none; margin-top: var(--space-md);">
+                    <h4 style="margin-bottom: var(--space-sm);">Datos extraidos:</h4>
+                    <div id="ocr-datos"></div>
+                </div>
+                <div id="ocr-editable" style="display:none; margin-top: var(--space-md);">
+                    <div class="glass-input-group">
+                        <label for="ocr-tipo-mov">Tipo</label>
+                        <select id="ocr-tipo-mov" class="glass-input glass-select">
+                            <option value="gasto">Gasto</option>
+                            <option value="ingreso">Ingreso</option>
+                        </select>
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="ocr-monto">Monto</label>
+                        <input type="number" id="ocr-monto" class="glass-input" placeholder="0.00" step="0.01" min="0.01">
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="ocr-fecha">Fecha</label>
+                        <input type="date" id="ocr-fecha" class="glass-input">
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="ocr-descripcion">Descripcion</label>
+                        <input type="text" id="ocr-descripcion" class="glass-input" placeholder="Descripcion">
+                    </div>
+                    <div class="glass-input-group">
+                        <label for="ocr-categoria">Categoria</label>
+                        <select id="ocr-categoria" class="glass-input glass-select">
+                            <option value="">Seleccionar categoria</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md);">
                     <button class="glass-btn glass-btn--primary" id="btn-escanear" onclick="escanearRecibo()" style="flex:1;" disabled>
@@ -527,27 +1027,110 @@
     <!-- ============================================================
          MODAL: Chat LLM
          ============================================================ -->
-    <div class="glass-modal-overlay" id="modal-chat" onclick="if(event.target===this) cerrarModal('modal-chat')">
-        <div class="glass-modal" style="max-height: 80vh; display: flex; flex-direction: column;">
+    <div id="modal-chat" class="glass-modal-overlay" onclick="if(event.target===this) cerrarModal('modal-chat')">
+        <div class="glass-modal glass-modal--chat">
             <div class="glass-modal-header">
                 <h2>🤖 Asistente Financiero</h2>
-                <button class="btn-close" onclick="cerrarModal('modal-chat')" aria-label="Cerrar">&times;</button>
+                <button class="glass-modal-close" onclick="cerrarModal('modal-chat')">&times;</button>
             </div>
-            <div class="glass-modal-body" style="flex:1; display:flex; flex-direction:column; overflow: hidden;">
-                <div id="chat-messages" style="flex:1; overflow-y:auto; margin-bottom: var(--space-md); padding: var(--space-sm);">
+            <div class="glass-modal-body glass-modal-body--chat">
+                <div id="chat-messages" class="chat-messages">
                     <div class="chat-msg chat-msg--bot">
                         <span class="chat-avatar">🤖</span>
-                        <div class="chat-bubble">¡Hola! Soy tu asistente financiero. Pregúntame sobre tus gastos, consejos de ahorro, o análisis de tu situación.</div>
+                        <div class="chat-bubble">¡Hola! Soy tu asistente financiero. Preguntame sobre tus gastos, consejos de ahorro, o analisis de tu situacion.</div>
                     </div>
                 </div>
-                <form id="chat-form" style="display:flex; gap: var(--space-sm);" onsubmit="enviarChat(event)">
-                    <input type="text" class="glass-input" id="chat-input" placeholder="Escribe tu pregunta..." autocomplete="off" style="flex:1;">
+                <form id="chat-form" class="chat-form" onsubmit="enviarChat(event)">
+                    <input type="text" class="glass-input chat-input" id="chat-input" placeholder="Escribe tu pregunta..." autocomplete="off">
                     <button type="submit" class="glass-btn glass-btn--primary" id="btn-chat-send">Enviar</button>
+                    <button type="button" class="glass-btn glass-btn--sm" onclick="abrirModalChatLive()" title="Chat de voz">🎙️</button>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- ============================================================
+         MODAL: Chat Live (Gemini Live)
+         ============================================================ -->
+    <div id="modal-chat-live" class="glass-modal-overlay" onclick="if(event.target===this) cerrarGeminiLive()">
+        <div class="glass-modal glass-modal--chat-live">
+            <div class="live-modal-header">
+                <div class="live-header-left">
+                    <span style="font-size: 1.1rem;">🎙️</span>
+                    <span class="live-header-title">Gemini Live</span>
+                </div>
+                <div class="live-status-container">
+                    <div id="live-status-dot" class="live-status-dot"></div>
+                    <span id="live-status-text" class="live-status-text">Desconectado</span>
+                </div>
+                <button class="glass-btn glass-btn--sm" onclick="cerrarGeminiLive()" style="margin-left:auto;">✕</button>
+            </div>
+            <div class="glass-modal-body glass-modal-body--chat-live">
+                <!-- Esfera nebulosa -->
+                <div class="live-nebula-wrap">
+                    <div id="live-nebula-sphere" class="live-nebula-sphere">
+                        <div class="nebula-core"></div>
+                        <div class="nebula-layer nebula-layer--1"></div>
+                        <div class="nebula-layer nebula-layer--2"></div>
+                        <div class="nebula-layer nebula-layer--3"></div>
+                        <div class="nebula-glow-ring"></div>
+                        <div class="nebula-wave-bars">
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicadores -->
+                <div id="live-tool-indicator" class="live-tool-indicator" style="display:none;">
+                    <div class="live-tool-pulse"></div>
+                    <span id="live-tool-text">Ejecutando herramienta...</span>
+                </div>
+                <div id="live-thinking-indicator" class="live-thinking-indicator" style="display:none;">
+                    <div class="live-thinking-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span>Pensando...</span>
+                </div>
+
+                <!-- Transcripcion -->
+                <div class="live-transcript-container">
+                    <div class="live-transcript-header">Transcripcion</div>
+                    <div id="live-transcript-body" class="live-transcript-body">
+                        Pulsa 'Iniciar' para comenzar la conversacion por voz con Gemini...
+                    </div>
+                </div>
+
+                <!-- Controles -->
+                <div class="live-controls-row">
+                    <button id="btn-live-start" class="glass-btn glass-btn--primary live-btn-start--nebula" onclick="activarGeminiLiveConectando()">🚀 Iniciar</button>
+                    <button id="btn-live-hangup" class="glass-btn glass-btn--danger" onclick="cerrarGeminiLive()" style="display:none;">📞 Colgar</button>
+                    <button id="btn-live-mute" class="glass-btn live-btn-mute" onclick="toggleMuteMicrofono()" disabled>🎤 Silenciar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         SCRIPTS
+         ============================================================ -->
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/movimientos.js"></script>
+    <script src="js/presupuestos.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/ia.js"></script>
+    <script src="js/gemini_live.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

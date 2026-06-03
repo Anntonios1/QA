@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="ControlCash - Control financiero con IA (NVIDIA NIM), OCR (Nemotron Parse), JWT auth y reportes. Flask + PostgreSQL + Capacitor." />
+<title>ControlCash — Control financiero inteligente</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+
+<style>
+:root {
+  --bg: #0a0216;
+  --bg2: #1a0738;
+  --purple-deep: #0a0216;
+  --purple-mid: #11052C;
+  --purple-light: #2D0C54;
+  --accent-pink: #FF007A;
+  --accent-cyan: #00E5FF;
+  --accent-violet: #8F00FF;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-blur: 18px;
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-strong: rgba(255, 255, 255, 0.35);
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.18);
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  --color-info: #00E5FF;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 120px; }
+
+body {
+  font-family: var(--font-family);
+  background: linear-gradient(135deg, #11052C 0%, #2D0C54 30%, #1A0738 60%, #0A0216 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  position: relative;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.liquid-orb {
+  position: fixed; border-radius: 50%; filter: blur(80px);
+  pointer-events: none; z-index: 1; opacity: 0.15;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+.liquid-orb--1 { width: 400px; height: 400px; background: var(--accent-pink); top: -100px; left: -100px; }
+.liquid-orb--2 { width: 350px; height: 350px; background: var(--color-info); bottom: -100px; right: -100px; animation-delay: -7s; }
+.liquid-orb--3 { width: 300px; height: 300px; background: var(--accent-cyan); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -14s; }
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -30px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(20px, 10px) scale(1.05); }
+}
+
+body::before {
+  content: ""; position: fixed; inset: 0;
+  background: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 92%);
+  pointer-events: none; z-index: 1;
+}
+
+canvas#nebula { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+canvas#particles { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+
+.progress {
+  position: fixed; top: 0; left: 0; width: 100%; height: 3px;
+  transform-origin: left; transform: scaleX(0);
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  z-index: 9999; box-shadow: 0 0 20px rgba(255, 0, 122, 0.4);
+}
+
+.container { width: min(1180px, 92%); margin: 0 auto; position: relative; z-index: 3; }
+
+.glass {
+  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border); border-radius: 20px;
+}
+
+.section { position: relative; z-index: 2; padding: 150px 0; }
+.section.hero { min-height: 100vh; display: flex; align-items: center; padding: 150px 0 100px; }
+.section.cta { min-height: 86vh; display: flex; align-items: center; padding: 160px 0 120px; }
+
+.nav {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  width: min(1180px, 92%); height: 76px; padding: 0 22px; border-radius: 24px;
+  background: rgba(17, 5, 44, 0.7); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 1000; box-shadow: 0 14px 50px rgba(0, 0, 0, 0.26);
+  transition: all 0.4s ease, opacity 0.5s ease, transform 0.5s ease;
+}
+.nav.scrolled { background: rgba(17, 5, 44, 0.92); box-shadow: 0 14px 50px rgba(0, 0, 0, 0.45); }
+.nav.nav-hidden { opacity: 0; transform: translateX(-50%) translateY(-120%); pointer-events: none; }
+
+.logo { display: flex; align-items: center; gap: 14px; font-weight: 800; letter-spacing: -0.04em; }
+.logo-text {
+  font-size: 1.15rem;
+  background: linear-gradient(90deg, #ffffff, var(--accent-violet), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links a {
+  color: var(--text-secondary); text-decoration: none; font-weight: 500;
+  transition: color 0.2s ease, transform 0.2s ease; position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-cyan));
+  transition: width 0.3s ease;
+}
+.nav-links a:hover::after { width: 100%; }
+.nav-links a:hover { color: var(--text-primary); transform: translateY(-1px); }
+
+.nav-cta {
+  padding: 12px 20px; border-radius: 999px; color: white !important;
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-violet));
+  box-shadow: 0 10px 30px rgba(255, 0, 122, 0.22);
+}
+.nav-cta::after { display: none; }
+.nav-cta:hover { transform: translateY(-2px) !important; }
+
+.hero-grid {
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  gap: 56px; align-items: center;
+}
+.hero-copy { max-width: 640px; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px;
+  border-radius: 999px; color: var(--accent-cyan);
+  border: 1px solid rgba(0, 229, 255, 0.3); background: rgba(0, 229, 255, 0.06);
+  font-size: 0.88rem; letter-spacing: 0.02em;
+}
+.badge-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--accent-cyan);
+  box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.35); animation: pulseDot 1.8s infinite;
+}
+@keyframes pulseDot {
+  0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.35); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 229, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
+}
+
+.hero-title {
+  margin: 22px 0 24px; font-weight: 800; letter-spacing: -0.04em;
+  line-height: 0.94; font-size: clamp(3.4rem, 8vw, 7rem);
+}
+.hero-title .soft {
+  background: linear-gradient(180deg, #ffffff, #e8ddff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-title .accent {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.typewriter-cursor {
+  display: inline-block; width: 3px; height: 0.85em; background: var(--accent-cyan);
+  margin-left: 4px; animation: blink 0.8s step-end infinite; vertical-align: baseline;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.hero-copy p { max-width: 560px; font-size: 1.15rem; line-height: 1.85; color: var(--text-secondary); }
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
+
+.btn {
+  appearance: none; border: none; cursor: pointer; padding: 16px 26px;
+  border-radius: 999px; font-weight: 700; font-family: var(--font-family);
+  font-size: 1rem; transition: transform 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.01em; position: relative; overflow: hidden;
+}
+.btn-primary {
+  color: white; background: linear-gradient(135deg, var(--accent-pink), #FF5E99);
+  box-shadow: 0 14px 34px rgba(255, 0, 122, 0.24);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(255, 0, 122, 0.34); }
+.btn-secondary {
+  color: white; background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border-strong);
+}
+.btn-secondary:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.24); }
+
+.trust-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.trust-chip {
+  padding: 10px 14px; border-radius: 999px; color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.86rem; transition: all 0.3s ease;
+}
+.trust-chip:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
+
+.hero-visual { position: relative; display: flex; justify-content: center; align-items: center; }
+.hero-orb {
+  position: absolute; inset: auto 10% -7% 10%; height: 440px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,0,122,0.42), rgba(0,229,255,0.12) 38%, transparent 72%);
+  filter: blur(24px); z-index: 0;
+}
+
+.hero-device {
+  position: relative; z-index: 1; width: min(100%, 450px); padding: 24px;
+  border-radius: 34px; min-height: 640px;
+  background: linear-gradient(180deg, rgba(26,10,46,0.96), rgba(16,8,31,0.96));
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 34px 90px rgba(0,0,0,0.55), 0 0 90px rgba(255,0,122,0.18);
+  overflow: hidden;
+}
+.hero-device::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent 22%, transparent 78%, rgba(255,255,255,0.05));
+  pointer-events: none;
+}
+
+.device-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.device-name { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em; margin-top: 4px; }
+.device-subtitle { color: var(--text-secondary); font-size: 0.92rem; }
+.device-avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  box-shadow: 0 0 0 6px rgba(255,255,255,0.05);
+}
+
+.device-screen { display: grid; gap: 16px; margin-top: 18px; }
+.device-card {
+  border-radius: 24px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08); padding: 18px; transition: all 0.4s ease;
+}
+.device-card:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.07); transform: translateY(-2px); }
+.device-card.main {
+  min-height: 250px; display: grid; place-items: center; text-align: center;
+  background: linear-gradient(135deg, rgba(255,0,122,0.24), rgba(0,229,255,0.12));
+  border: 1px dashed rgba(255,255,255,0.16);
+}
+.device-card h3, .feature-card h3, .problem-card h3, .stat-card h3 { font-weight: 800; letter-spacing: -0.03em; }
+.device-card p, .feature-card p, .problem-card p { color: var(--text-secondary); line-height: 1.7; }
+
+.device-mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.device-mini { min-height: 124px; display: flex; flex-direction: column; justify-content: space-between; }
+.device-mini.full { grid-column: 1 / -1; min-height: 92px; }
+.device-mini-label { font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-cyan); }
+.device-mini strong { display: block; margin-top: 8px; font-size: 1rem; }
+
+.device-stat {
+  position: absolute; right: 22px; bottom: 22px; padding: 14px 16px;
+  border-radius: 18px; background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(16px);
+}
+
+.section-head { display: flex; flex-direction: column; gap: 14px; max-width: 760px; margin-bottom: 36px; }
+.eyebrow { font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent-cyan); font-size: 0.76rem; }
+.section-title { font-weight: 800; letter-spacing: -0.04em; line-height: 0.98; font-size: clamp(2.4rem, 5vw, 4.8rem); }
+.section-title .gradient {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.section-copy { max-width: 620px; color: var(--text-secondary); line-height: 1.85; font-size: 1.02rem; }
+
+.divider { display: flex; align-items: center; gap: 16px; margin-top: 34px; }
+.divider-line { height: 0.5px; flex: 1; max-width: 240px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent); }
+.divider-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+
+.band { padding-top: 24px; }
+.band-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.band-pill {
+  padding: 12px 16px; border-radius: 999px; font-weight: 600; font-size: 0.74rem;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
+  transition: all 0.3s ease;
+}
+.band-pill:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); transform: translateY(-2px); }
+
+.problems { padding: 160px 0 140px; }
+.problems-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 48px; }
+
+.problem-card {
+  position: relative; padding: 32px 28px; border-radius: 28px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); overflow: hidden;
+}
+.problem-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  transform: scaleX(0); transition: transform 0.5s ease;
+}
+.problem-card:hover::before { transform: scaleX(1); }
+.problem-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); transform: translateY(-8px); box-shadow: 0 30px 60px rgba(0,0,0,0.3); }
+
+.problem-icon {
+  width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center;
+  font-size: 1.8rem; margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(255,0,122,0.15), rgba(0,229,255,0.08));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.problem-card h3 { font-size: 1.25rem; margin-bottom: 12px; }
+.problem-card p { font-size: 0.95rem; }
+
+.features { padding: 160px 0 140px; }
+.features-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 48px; }
+
+.feature-card {
+  position: relative; padding: 36px 32px; border-radius: 28px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); overflow: hidden; display: grid; gap: 16px;
+}
+.feature-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); transform: translateY(-4px); }
+
+.feature-icon {
+  width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, rgba(143,0,255,0.2), rgba(0,229,255,0.1));
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.feature-card h3 { font-size: 1.35rem; }
+.feature-card p { font-size: 0.98rem; line-height: 1.8; }
+
+.feature-tag {
+  display: inline-block; padding: 4px 10px; border-radius: 6px;
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em;
+  background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.2);
+  color: var(--accent-cyan);
+}
+
+.stats { padding: 120px 0; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.stat-card {
+  text-align: center; padding: 40px 24px; border-radius: 28px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  transition: all 0.4s ease;
+}
+.stat-card:hover { background: rgba(255,255,255,0.06); transform: translateY(-4px); }
+.stat-number {
+  font-weight: 900; font-size: clamp(2.5rem, 4vw, 3.8rem); letter-spacing: -0.04em;
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;
+}
+.stat-label { margin-top: 10px; color: var(--text-secondary); font-size: 0.92rem; font-weight: 500; }
+
+.arch { padding: 150px 0 140px; }
+.arch-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 48px; }
+.arch-card {
+  padding: 28px; border-radius: 28px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07); transition: all 0.4s ease;
+}
+.arch-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); transform: translateY(-4px); }
+.arch-card h3 { font-size: 1.2rem; margin-bottom: 8px; }
+.arch-card p { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.7; }
+.arch-label {
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent-pink); margin-bottom: 10px;
+}
+.arch-files {
+  margin-top: 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.arch-file {
+  font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);
+  padding: 6px 10px; border-radius: 8px; background: rgba(0,0,0,0.2);
+}
+
+.cta-shell { display: grid; gap: 16px; justify-items: center; text-align: center; }
+.cta-title { font-weight: 800; letter-spacing: -0.04em; line-height: 0.96; font-size: clamp(3rem, 7vw, 6rem); }
+.cta-title .soft {
+  background: linear-gradient(180deg, #ffffff, #e8ddff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.cta-title .accent {
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet), var(--accent-pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.cta-copy { max-width: 760px; color: var(--text-secondary); line-height: 1.85; font-size: 1.04rem; }
+.cta-actions { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 10px; }
+
+.footer { position: relative; z-index: 2; padding: 28px 0 40px; border-top: 1px solid rgba(255,255,255,0.08); }
+.footer-grid { display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; }
+.footer-copy { color: var(--text-muted); }
+.footer-badges { display: flex; flex-wrap: wrap; gap: 12px; }
+.footer-badge {
+  padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-secondary); background: rgba(255,255,255,0.03); font-size: 0.88rem;
+}
+
+.reveal { will-change: transform, opacity; }
+
+.glow-border { position: relative; }
+.glow-border::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
+}
+.glow-border:hover::before { opacity: 1; }
+
+/* ============================================================
+   AUTO MODE (PRESENTATION) - Fixed viewport, timeline-driven
+   ============================================================ */
+.presentation-stage {
+  position: fixed; inset: 0; z-index: 5000;
+  background: linear-gradient(135deg, #11052C 0%, #2D0C54 30%, #1A0738 60%, #0A0216 100%);
+  display: none;
+  overflow: hidden;
+}
+.presentation-stage.active { display: block; }
+
+.presentation-stage .liquid-orb { z-index: 5001; }
+
+.stage-content {
+  position: absolute; inset: 0; z-index: 5003;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.slide-container {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%) translateY(30px) scale(0.97);
+  width: min(900px, 90%);
+  max-height: 80vh; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 28px; opacity: 0;
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  text-align: center;
+}
+.slide-container.slide-active {
+  opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); pointer-events: auto;
+}
+.slide-container.slide-exit {
+  opacity: 0; transform: translate(-50%, -50%) translateY(-30px) scale(0.97);
+}
+
+.slide-icon {
+  width: 80px; height: 80px; border-radius: 24px; display: grid; place-items: center;
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, rgba(255,0,122,0.2), rgba(0,229,255,0.12));
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.slide-title {
+  font-weight: 800; letter-spacing: -0.04em; line-height: 1;
+  font-size: clamp(2rem, 4.5vw, 3.6rem);
+}
+.slide-title .accent {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.slide-desc {
+  max-width: 600px; color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem;
+}
+
+.slide-card {
+  padding: 24px 32px; border-radius: 20px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(12px); max-width: 500px; width: 100%;
+}
+.slide-card-code {
+  font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent-cyan);
+  text-align: left; line-height: 1.7; white-space: pre-line;
+}
+.slide-card-metric {
+  display: flex; justify-content: center; gap: 32px; flex-wrap: wrap;
+}
+.slide-metric {
+  text-align: center;
+}
+.slide-metric-value {
+  font-weight: 900; font-size: 2rem; letter-spacing: -0.03em;
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.slide-metric-label {
+  font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.slide-tags {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+}
+.slide-tag {
+  padding: 8px 14px; border-radius: 999px; font-size: 0.8rem;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+}
+
+.stage-progress {
+  position: fixed; bottom: 0; left: 0; width: 100%; height: 3px;
+  z-index: 5010; background: rgba(255,255,255,0.06);
+}
+.stage-progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-violet), var(--accent-cyan));
+  transition: width 0.15s linear;
+}
+
+.stage-counter {
+  position: fixed; bottom: 20px; right: 28px; z-index: 5010;
+  font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted);
+}
+
+.stage-hint {
+  position: fixed; bottom: 20px; left: 28px; z-index: 5010;
+  font-size: 0.78rem; color: var(--text-muted);
+}
+.stage-hint kbd {
+  padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12); font-family: var(--font-mono); font-size: 0.72rem;
+}
+
+@media (max-width: 1024px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .problems-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .features-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .arch-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .nav-links a:not(.nav-cta) { display: none; }
+  .nav { height: 72px; padding: 0 16px; }
+  .section { padding: 120px 0; }
+  .section.hero, .section.cta { padding: 130px 0 100px; }
+  .hero-title { font-size: 3.2rem; }
+  .section-title, .cta-title { font-size: 3rem; }
+  .device-mini-grid { grid-template-columns: 1fr; }
+  .problems-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="progress" aria-hidden="true"></div>
+<canvas id="nebula" aria-hidden="true"></canvas>
+<canvas id="particles" aria-hidden="true"></canvas>
+<div class="liquid-orb liquid-orb--1" aria-hidden="true"></div>
+<div class="liquid-orb liquid-orb--2" aria-hidden="true"></div>
+<div class="liquid-orb liquid-orb--3" aria-hidden="true"></div>
+
+<nav class="nav glass" id="mainNav">
+  <div class="logo" aria-label="ControlCash">
+    <div style="background: none; box-shadow: none; width: auto; height: auto;">
+      <svg viewBox="0 0 28 28" width="32" height="32">
+        <defs>
+          <linearGradient id="nav-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2c0f4a" /><stop offset="60%" stop-color="#1b1640" /><stop offset="100%" stop-color="#0a0a1a" />
+          </linearGradient>
+          <linearGradient id="nav-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff4b9a" /><stop offset="100%" stop-color="#00e5ff" />
+          </linearGradient>
+          <linearGradient id="nav-mark" x1="0%" y1="0%" x2="100%">
+            <stop offset="0%" stop-color="#ffffff" /><stop offset="100%" stop-color="#d6f9ff" />
+          </linearGradient>
+        </defs>
+        <rect x="2.5" y="2.5" width="23" height="23" rx="7" fill="url(#nav-bg)" />
+        <circle cx="14" cy="14" r="8.5" stroke="url(#nav-ring)" stroke-width="2.2" fill="none" />
+        <path d="M17.6 10.6 A 4.8 4.8 0 1 0 17.6 17.4" stroke="url(#nav-mark)" stroke-width="2.2" stroke-linecap="round" fill="none" />
+        <path d="M12.3 15.6 L13.6 16.9 L16.6 13.1" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      </svg>
+    </div>
+    <div class="logo-text">ControlCash</div>
+  </div>
+  <div class="nav-links">
+    <a href="#problems">Problemas</a>
+    <a href="#features">Funciones</a>
+    <a href="#stats">Codigo</a>
+    <a href="#architecture">Arquitectura</a>
+    <a href="app/" class="nav-cta" style="text-decoration:none;">Abrir app</a>
+  </div>
+</nav>
+
+<div style="position:fixed;bottom:18px;right:18px;z-index:998;font-size:0.72rem;color:var(--text-muted);padding:8px 12px;border-radius:12px;background:rgba(17,5,44,0.5);border:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(8px);cursor:pointer;user-select:none;" id="autoHint" title="Activa la presentacion automatica">
+  Presentacion: <kbd style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.08);font-family:var(--font-mono);font-size:0.7rem;">Ctrl</kbd> + <kbd style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.08);font-family:var(--font-mono);font-size:0.7rem;">Shift</kbd> + <kbd style="padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.08);font-family:var(--font-mono);font-size:0.7rem;">P</kbd>
+</div>
+
+<section class="section hero" id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-copy reveal">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span>Flask + PostgreSQL + NVIDIA NIM + Capacitor</span>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="soft">Tu dinero.</span><br>
+          <span class="accent">Tu control.</span><span class="typewriter-cursor"></span>
+        </h1>
+
+        <p>
+          ControlCash es un sistema de control financiero de 3 capas con IA integrada (NVIDIA NIM), OCR de recibos (Nemotron Parse), autenticacion JWT y biometrica (Capacitor), reportes exportables y una interfaz glassmorphism. 129 features reales implementadas, 48 endpoints REST, 10 tablas en base de datos.
+        </p>
+
+        <div class="hero-actions">
+          <a href="app/" class="btn btn-primary" style="text-decoration:none;">Abrir aplicacion</a>
+          <a href="https://github.com/Anntonios1/ControlCash" class="btn btn-secondary" style="text-decoration:none;">Ver en GitHub</a>
+        </div>
+
+        <div class="trust-row">
+          <span class="trust-chip">OCR NVIDIA NIM</span>
+          <span class="trust-chip">JWT HS256</span>
+          <span class="trust-chip">AES-256-GCM</span>
+          <span class="trust-chip">Chart.js</span>
+          <span class="trust-chip">Gemini Live</span>
+          <span class="trust-chip">PWA</span>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="hero-orb" aria-hidden="true"></div>
+        <div class="hero-device float-card">
+          <div class="device-top">
+            <div>
+              <div class="device-subtitle">Dashboard</div>
+              <div class="device-name">ControlCash</div>
+            </div>
+            <div class="device-avatar" aria-hidden="true"></div>
+          </div>
+
+          <div class="device-screen">
+            <div class="device-card main">
+              <div>
+                <div style="font-family:var(--font-mono);font-weight:800;font-size:2.2rem;letter-spacing:-0.03em;background:linear-gradient(90deg,var(--accent-pink),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">$1,245,800</div>
+                <h3 style="margin-top:8px;">Balance actual</h3>
+                <p>Ingresos: $2,100,000 | Gastos: $854,200</p>
+                <div style="margin-top:12px;font-family:var(--font-mono);font-size:0.82rem;color:var(--accent-cyan);">47 movimientos registrados</div>
+              </div>
+            </div>
+
+            <div class="device-mini-grid">
+              <div class="device-card device-mini">
+                <div>
+                  <div class="device-mini-label">OCR</div>
+                  <strong>Nemotron Parse</strong>
+                </div>
+                <p>Escanea recibos con IA multi-ronda.</p>
+              </div>
+
+              <div class="device-card device-mini">
+                <div>
+                  <div class="device-mini-label">Chat IA</div>
+                  <strong>8 herramientas</strong>
+                </div>
+                <p>Asistente con tool-calling financiero.</p>
+              </div>
+
+              <div class="device-card device-mini full">
+                <div>
+                  <div class="device-mini-label">Reportes</div>
+                  <strong>PDF + Excel + CSV</strong>
+                </div>
+                <p>Exporta con jsPDF, SheetJS y Flask CSV.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="device-stat">
+            <div style="font-family:var(--font-mono);font-weight:800;letter-spacing:-0.03em;">48</div>
+            <div style="color:var(--text-secondary);font-size:.9rem;">endpoints REST</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider" aria-hidden="true">
+      <span class="divider-line"></span>
+      <span class="divider-dot"></span>
+      <span class="divider-dot"></span>
+      <span class="divider-dot"></span>
+      <span class="divider-line"></span>
+    </div>
+
+    <div class="band">
+      <div class="band-grid">
+        <span class="band-pill">ISO 27001</span>
+        <span class="band-pill">OWASP</span>
+        <span class="band-pill">AES-256-GCM</span>
+        <span class="band-pill">ISO 9126</span>
+        <span class="band-pill">CMMI</span>
+        <span class="band-pill">IEEE 730</span>
+        <span class="band-pill">ISO 12207</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section problems" id="problems">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">El problema</div>
+      <div class="section-title">El dinero se escapa <span class="gradient">sin que lo notes.</span></div>
+      <p class="section-copy">
+        Gastos hormiga, recibos perdidos, presupuestos olvidados y cero visibilidad real. ControlCash nace para resolver estos problemas con tecnologia real: IA, OCR y automatizacion.
+      </p>
+    </div>
+
+    <div class="problems-grid">
+      <article class="problem-card glow-border reveal">
+        <div class="problem-icon">&#128176;</div>
+        <h3>Gastos invisibles</h3>
+        <p>Sin un sistema de registro, las suscripciones olvidadas y cargos recurrentes se acumulan. ControlCash registra cada movimiento con categorias personalizables y alertas de presupuesto al 80% y 100%.</p>
+      </article>
+
+      <article class="problem-card glow-border reveal">
+        <div class="problem-icon">&#128196;</div>
+        <h3>Recibos perdidos</h3>
+        <p>El OCR con NVIDIA Nemotron Parse extrae total, fecha, comercio e items de cualquier foto de recibo. Pipeline multi-ronda con tool calls internos para maximizar precision.</p>
+      </article>
+
+      <article class="problem-card glow-border reveal">
+        <div class="problem-icon">&#128200;</div>
+        <h3>Cero visibilidad</h3>
+        <p>Reportes con Chart.js: donut por categoria, tendencia diaria 30 dias, comparativo de periodos. Exporta a PDF (jsPDF), Excel (SheetJS) o CSV (Flask).</p>
+      </article>
+
+      <article class="problem-card glow-border reveal">
+        <div class="problem-icon">&#128274;</div>
+        <h3>Seguridad insuficiente</h3>
+        <p>JWT con access token (15 min) + refresh token (7 dias, hash SHA-256 en DB). Cifrado AES-256-GCM con PBKDF2. Rate limiting con Flask-Limiter. Headers CSP, X-Frame-Options.</p>
+      </article>
+
+      <article class="problem-card glow-border reveal">
+        <div class="problem-icon">&#128336;</div>
+        <h3>Registro manual tedioso</h3>
+        <p>Recurrencias automaticas: configura gastos recurrentes (diario, semanal, quincenal, mensual, anual) y el sistema los ejecuta automaticamente con un job diario en background.</p>
+      </article>
+
+      <article class="problem-card glow-border reveal">
+        <div class="problem-icon">&#127919;</div>
+        <h3>Metas sin seguimiento</h3>
+        <p>Presupuestos por categoria con barras de progreso, alertas visuales y comparativo mes a mes. La IA genera un perfil financiero con score 0-100 y habitos detectados.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section features" id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">La solucion</div>
+      <div class="section-title">129 features reales <span class="gradient">implementadas.</span></div>
+      <p class="section-copy">
+        Cada funcion esta respaldada por codigo real: 48 endpoints REST, modulos OCR y LLM con NVIDIA NIM, autenticacion JWT, graficos Chart.js y exportacion multi-formato.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128247;</div>
+        <h3>Escanea recibos con la camara</h3>
+        <p>Le tomas foto al recibo y la app entiende todo: cuanto pagaste, donde, y cuando. Sin escribir un solo numero.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#129302;</div>
+        <h3>Chat con tu dinero</h3>
+        <p>Le preguntas a la app cosas como "¿cuanto llevo gastado?" o "¿en que se fue la plata?" y te contesta con tus numeros reales. No inventa nada.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#127908;</div>
+        <h3>Habla con tu app</h3>
+        <p>Literalmente puedes preguntarle cosas por voz. Activas el microfono, preguntas, y te responde al instante. Como tener un asistente financiero en el bolsillo.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128272;</div>
+        <h3>Entra con tu huella o tu cara</h3>
+        <p>Sin contrasena. Tu sesion se cierra sola si dejas la app abierta. Tus datos viajan cifrados con el mismo nivel que usa tu banco.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128202;</div>
+        <h3>Graficos que se entienden</h3>
+        <p>Pastel por categoria, linea de tendencia mes a mes, top de gastos. Ves donde se va la plata de un vistazo. Y exportas a PDF, Excel o CSV cuando quieras.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128176;</div>
+        <h3>Presupuestos con avisos</h3>
+        <p>Pones un tope por categoria y la app te avisa cuando te acercas al 80% y cuando lo pasas. Asi no te llevas sorpresas a fin de mes.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128260;</div>
+        <h3>Pagos que se repiten solos</h3>
+        <p>Netflix, gym, arriendo, suscripciones. Lo configuras una vez y la app crea el gasto cada mes, semana o cuando sea. Tu no te acuerdas de fechas.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128276;</div>
+        <h3>Avisos que importan</h3>
+        <p>Te notifica cuando te pasas de un presupuesto, cuando llega un mensaje del coach IA, o cuando tienes un insight del dia. Tambien push al celular.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#129504;</div>
+        <h3>Tu perfil financiero</h3>
+        <p>La IA analiza como gastas y te dice que tipo de persona financiera eres. Un puntaje de 0 a 100, tus habitos buenos y donde puedes mejorar. Con un mensaje motivador diario.</p>
+      </article>
+
+      <article class="feature-card reveal">
+        <div class="feature-icon">&#128187;</div>
+        <h3>Funciona en todo lado</h3>
+        <p>Computador, celular Android, iPhone. Se adapta a tu moneda (pesos, dolares). Aunque no tengas internet puedes seguir usandola.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section stats" id="stats">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">El codigo</div>
+      <div class="section-title">Numeros reales <span class="gradient">del proyecto.</span></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card reveal">
+        <div class="stat-number" data-target="48" data-suffix="">0</div>
+        <div class="stat-label">Endpoints REST</div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-number" data-target="129" data-suffix="">0</div>
+        <div class="stat-label">Features implementadas</div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-number" data-target="10" data-suffix="">0</div>
+        <div class="stat-label">Tablas en base de datos</div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-number" data-target="8" data-suffix="">0</div>
+        <div class="stat-label">Modulos frontend JS</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section arch" id="architecture">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Arquitectura</div>
+      <div class="section-title">3 capas <span class="gradient">bien separadas.</span></div>
+      <p class="section-copy">
+        Separacion de responsabilidades: datos, negocio y presentacion. Cada capa es independiente y testeable por separado.
+      </p>
+    </div>
+
+    <div class="arch-grid">
+      <article class="arch-card reveal">
+        <div class="arch-label">Capa de datos</div>
+        <h3>db/</h3>
+        <p>PostgreSQL + MySQL/MariaDB con auto-seleccion. 10 tablas, repositories pattern, cifrado AES-256-GCM. Schema DBML.</p>
+        <div class="arch-files">
+          <span class="arch-file">pg_repository.py</span>
+          <span class="arch-file">mysql_repository.py</span>
+          <span class="arch-file">crypto.py (400 LOC)</span>
+          <span class="arch-file">schema.dbml</span>
+        </div>
+      </article>
+
+      <article class="arch-card reveal">
+        <div class="arch-label">Capa de negocio</div>
+        <h3>api/</h3>
+        <p>Flask REST API con 48 endpoints. JWT auth, rate limiting, CORS, headers de seguridad. Modulos OCR (NVIDIA NIM), LLM (chat + perfil), push notifications.</p>
+        <div class="arch-files">
+          <span class="arch-file">app.py (2,347 LOC)</span>
+          <span class="arch-file">ocr.py (1,359 LOC)</span>
+          <span class="arch-file">llm.py (1,224 LOC)</span>
+          <span class="arch-file">jwt_auth.py (284 LOC)</span>
+          <span class="arch-file">push.py (202 LOC)</span>
+        </div>
+      </article>
+
+      <article class="arch-card reveal">
+        <div class="arch-label">Capa de presentacion</div>
+        <h3>app/</h3>
+        <p>HTML/CSS/JS vanilla + Chart.js + jsPDF + SheetJS. Glassmorphism UI, PWA con service worker, Capacitor para mobile (Android/iOS).</p>
+        <div class="arch-files">
+          <span class="arch-file">index.html (2,368 LOC)</span>
+          <span class="arch-file">styles.css</span>
+          <span class="arch-file">js/auth.js, movimientos.js</span>
+          <span class="arch-file">js/charts.js, presupuestos.js</span>
+          <span class="arch-file">js/ia.js, gemini_live.js</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section cta" id="download">
+  <div class="container">
+    <div class="cta-shell reveal">
+      <div class="cta-title">
+        <span class="soft">Toma el control</span><br>
+        <span class="accent">de tu dinero hoy.</span>
+      </div>
+      <p class="cta-copy">
+        Flask, PostgreSQL, NVIDIA NIM, JWT, Chart.js y Capacitor. Todo integrado, todo funcional. Clona el repositorio, configura tu .env y ejecuta <code style="font-family:var(--font-mono);color:var(--accent-cyan);">python api/app.py</code>.
+      </p>
+      <div class="cta-actions">
+        <a href="app/" class="btn btn-primary" style="text-decoration:none;">Entrar al dashboard</a>
+        <a href="https://github.com/Anntonios1/ControlCash" class="btn btn-secondary" style="text-decoration:none;">Ver codigo fuente</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="logo">
+        <div style="background: none; box-shadow: none; width: auto; height: auto;">
+          <svg viewBox="0 0 28 28" width="32" height="32">
+            <defs>
+              <linearGradient id="ft-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2c0f4a" /><stop offset="100%" stop-color="#0a0a1a" /></linearGradient>
+              <linearGradient id="ft-ring" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff4b9a" /><stop offset="100%" stop-color="#00e5ff" /></linearGradient>
+            </defs>
+            <rect x="2.5" y="2.5" width="23" height="23" rx="7" fill="url(#ft-bg)" />
+            <circle cx="14" cy="14" r="8.5" stroke="url(#ft-ring)" stroke-width="2.2" fill="none" />
+            <path d="M12.3 15.6 L13.6 16.9 L16.6 13.1" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
+        <div class="logo-text">ControlCash</div>
+      </div>
+      <div class="footer-badges">
+        <span class="footer-badge">ISO 27001</span>
+        <span class="footer-badge">OWASP</span>
+        <span class="footer-badge">AES-256-GCM</span>
+        <span class="footer-badge">&copy; 2026 Anntonios1</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     PRESENTATION STAGE (Auto Mode) - Fixed viewport, timeline
+     ============================================================ -->
+<div class="presentation-stage" id="presentationStage">
+  <div class="liquid-orb liquid-orb--1" aria-hidden="true"></div>
+  <div class="liquid-orb liquid-orb--2" aria-hidden="true"></div>
+
+  <div class="stage-content" id="stageContent"></div>
+
+  <div class="stage-progress">
+    <div class="stage-progress-fill" id="stageProgressFill"></div>
+  </div>
+  <div class="stage-counter" id="stageCounter"></div>
+  <div class="stage-hint">
+    <kbd>&larr;</kbd> <kbd>&rarr;</kbd> navegar &nbsp;
+    <kbd>Space</kbd> pausa &nbsp;
+    <kbd>Esc</kbd> salir &nbsp;
+    &nbsp;Activar: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const progress = document.querySelector('.progress');
+  const nav = document.getElementById('mainNav');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ============================================================
+  //  SCROLL MODE
+  // ============================================================
+  const updateProgress = () => {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const current = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+    progress.style.transform = `scaleX(${current})`;
+  };
+  updateProgress();
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    nav.classList.toggle('scrolled', window.scrollY > 80);
+  }, { passive: true });
+  window.addEventListener('resize', updateProgress);
+
+  // GSAP Animations
+  if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const animateOnScroll = (selector, opts = {}) => {
+      gsap.utils.toArray(selector).forEach((el, i) => {
+        gsap.set(el, { opacity: 0, y: opts.y || 36, x: opts.x || 0, scale: opts.scale || 1, rotateX: opts.rotateX || 0 });
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 95%',
+          once: true,
+          onEnter: () => gsap.to(el, {
+            opacity: 1, y: 0, x: 0, scale: 1, rotateX: 0,
+            duration: opts.duration || 0.9,
+            delay: (opts.stagger || 0) * i,
+            ease: opts.ease || 'power3.out'
+          })
+        });
+      });
+    };
+
+    setTimeout(() => {
+      gsap.from('.hero-copy > *', { opacity: 0, y: 24, duration: 0.9, stagger: 0.08, ease: 'power3.out' });
+      gsap.from('.hero-visual', { opacity: 0, y: 44, duration: 1.1, delay: 0.12, ease: 'power3.out' });
+
+      const floatCard = document.querySelector('.float-card');
+      if (floatCard) gsap.to(floatCard, { y: -12, duration: 3, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+
+      animateOnScroll('.reveal', { y: 36, duration: 0.9, stagger: 0 });
+      animateOnScroll('.problem-card', { y: 50, rotateX: 8, duration: 0.8, stagger: 0.1 });
+      animateOnScroll('.feature-card', { x: 0, y: 30, duration: 0.8, stagger: 0.08 });
+      animateOnScroll('.stat-card', { y: 0, scale: 0.8, duration: 0.6, ease: 'back.out(1.4)', stagger: 0.12 });
+      animateOnScroll('.arch-card', { y: 40, scale: 0.96, duration: 0.7, stagger: 0.1 });
+
+      ScrollTrigger.refresh();
+    }, 100);
+  }
+
+  // Counter animation
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseFloat(el.dataset.target);
+        const suffix = el.dataset.suffix || '';
+        const duration = 2000;
+        const start = performance.now();
+        const animate = (now) => {
+          const elapsed = now - start;
+          const p = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.round(eased * target) + suffix;
+          if (p < 1) requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.stat-number[data-target]').forEach(el => counterObserver.observe(el));
+
+  // Canvas: Nebula
+  const canvas = document.getElementById('nebula');
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  const colors = ['#11052C', '#8F00FF', '#FF007A', '#00E5FF', '#0A0216', '#2D0C54'];
+  const orbs = [];
+  const resizeCanvas = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
+  const initOrbs = () => {
+    orbs.length = 0;
+    for (let i = 0; i < 6; i++) orbs.push({ x: Math.random()*w, y: Math.random()*h, r: 160+Math.random()*180, dx: (Math.random()-0.5)*0.28, dy: (Math.random()-0.5)*0.28, color: colors[i] });
+  };
+  const animateNebula = () => {
+    ctx.clearRect(0, 0, w, h);
+    orbs.forEach(o => {
+      o.x += o.dx; o.y += o.dy;
+      if (o.x < -o.r || o.x > w+o.r) o.dx *= -1;
+      if (o.y < -o.r || o.y > h+o.r) o.dy *= -1;
+      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
+      g.addColorStop(0, `${o.color}66`); g.addColorStop(0.5, `${o.color}22`); g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
+    });
+    requestAnimationFrame(animateNebula);
+  };
+
+  // Canvas: Particles
+  const pCanvas = document.getElementById('particles');
+  const pCtx = pCanvas.getContext('2d');
+  let pW, pH;
+  const mouseP = [];
+  const resizeP = () => { pW = pCanvas.width = window.innerWidth; pH = pCanvas.height = window.innerHeight; };
+  document.addEventListener('mousemove', e => {
+    if (mouseP.length < 40) mouseP.push({ x: e.clientX, y: e.clientY, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2-1, life: 1, size: Math.random()*3+1, color: ['#FF007A','#00E5FF','#8F00FF'][Math.floor(Math.random()*3)] });
+  });
+  const animateP = () => {
+    pCtx.clearRect(0, 0, pW, pH);
+    for (let i = mouseP.length-1; i >= 0; i--) {
+      const p = mouseP[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.02; p.vy += 0.02;
+      if (p.life <= 0) { mouseP.splice(i, 1); continue; }
+      pCtx.globalAlpha = p.life*0.6; pCtx.fillStyle = p.color;
+      pCtx.beginPath(); pCtx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2); pCtx.fill();
+    }
+    pCtx.globalAlpha = 1; requestAnimationFrame(animateP);
+  };
+
+  resizeCanvas(); resizeP(); initOrbs(); animateNebula(); animateP();
+  window.addEventListener('resize', () => { resizeCanvas(); resizeP(); initOrbs(); updateProgress(); });
+
+  // ============================================================
+  //  PRESENTATION MODE (Auto) - Shortcut: Ctrl+Shift+P
+  //  Fixed viewport, timeline-driven slides, no scroll
+  // ============================================================
+  const slides = [
+    {
+      icon: '&#128176;',
+      title: 'Tu dinero, <span class="accent">tu control.</span>',
+      desc: 'ControlCash es la app que te ayuda a ver, organizar y entender tu dinero. Sin hojas de calculo, sin enredos.',
+      tags: ['IA integrada', 'OCR de recibos', 'Segura', 'Multi-moneda', 'Reportes'],
+      card: null
+    },
+    {
+      icon: '&#128247;',
+      title: 'Escanea recibos <span class="accent">con la camara</span>',
+      desc: 'Tomas una foto del recibo y la app entiende sola: el total, la fecha, el comercio. Cero escritura manual.',
+      tags: ['Una foto y listo', 'Detecta total', 'Detecta fecha', 'Detecta comercio', 'Funciona sin internet'],
+      card: { type: 'code', content: 'Foto del recibo\n  -> La IA lo lee\n  -> Extrae el total, la fecha, donde compraste\n  -> Lo guarda como movimiento\n  -> Tu solo confirmas\nSin escribir numeros. Sin errores.' }
+    },
+    {
+      icon: '&#129302;',
+      title: 'Preguntale a la <span class="accent">IA financiera</span>',
+      desc: 'Un chat que conoce tus numeros. Le preguntas cuanto llevas gastado, en que se fue la plata, o como va tu mes, y te contesta con tus datos reales.',
+      tags: ['Habla con tu dinero', 'Resumenes al instante', 'Detecta tendencias', 'Te aconseja'],
+      card: { type: 'code', content: 'Tu: "¿En que se fue la plata?"\nIA: "Esto es lo que gastaste:\n  Comida: $420,000 (32%)\n  Transporte: $280,000 (21%)\n  Entretenimiento: $150,000 (11%)..."\nSiempre con tus numeros reales.' }
+    },
+    {
+      icon: '&#127908;',
+      title: 'Habla con tu app <span class="accent">por voz</span>',
+      desc: 'Literalmente puedes hablarle. Activas el microfono, preguntas, y te responde en tiempo real. Como un asistente de bolsillo.',
+      tags: ['Voz en vivo', 'Manos libres', 'Te escucha', 'Te responde', 'Ve tus datos'],
+      card: { type: 'code', content: 'Tu (hablando): "¿Cuanto llevo este mes?"\nApp: "Llevas $1,245,800. Ingresos\n  $2,100,000, gastos $854,200.\n  Vas por buen camino."\nConversacion natural, sin escribir.' }
+    },
+    {
+      icon: '&#128272;',
+      title: 'Tu informacion <span class="accent">bien protegida</span>',
+      desc: 'Tu sesion expira sola si dejas la app abierta. Tus datos viajan cifrados. Puedes entrar con tu huella o tu cara. Nadie ve lo tuyo.',
+      tags: ['Huella digital', 'Reconocimiento facial', 'Sesion segura', 'Cifrado fuerte'],
+      card: { type: 'metrics', items: [
+        { value: '15 min', label: 'Se cierra sola' },
+        { value: 'Huella', label: 'Para entrar' },
+        { value: 'Cara', label: 'Reconoce' },
+        { value: 'Total', label: 'Cifrado' }
+      ]}
+    },
+    {
+      icon: '&#128202;',
+      title: 'Tus numeros <span class="accent">en graficos claros</span>',
+      desc: 'Pastel por categoria, linea de tendencia, comparativo de meses. Ves donde se va la plata de un vistazo. Y exportas a PDF o Excel cuando quieras.',
+      tags: ['Graficos interactivos', 'Por categoria', 'Por mes', 'PDF', 'Excel', 'CSV'],
+      card: { type: 'code', content: 'Donut: cuanto gastas en cada cosa\nLinea: como suben o bajan tus gastos\nTop 3: en que se va mas plata\nExporta a PDF, Excel o CSV\nPara llevar a tu contador, imprimirlo\n  o guardarlo donde quieras.' }
+    },
+    {
+      icon: '&#128176;',
+      title: 'Presupuestos que <span class="accent">se cuidan solos</span>',
+      desc: 'Pones un limite por categoria, la app te avisa cuando te acercas al 80% y cuando lo pasas. Asi no llegas a fin de mes con la sorpresa.',
+      tags: ['Limite por categoria', 'Aviso al 80%', 'Aviso al 100%', 'Comparativo mensual', 'Automatico al inicio'],
+      card: { type: 'metrics', items: [
+        { value: '80%', label: 'Te avisa' },
+        { value: '100%', label: 'Te alerta' },
+        { value: 'Mes a mes', label: 'Compara' },
+        { value: 'Auto', label: 'Crea inicial' }
+      ]}
+    },
+    {
+      icon: '&#128260;',
+      title: 'Pagos que <span class="accent">se repiten solos</span>',
+      desc: 'Configuras el Netflix, el gym, el arriendo una sola vez. La app crea el gasto cada mes automaticamente. Adios a recordar fechas.',
+      tags: ['Mensual', 'Semanal', 'Quincenal', 'Anual', 'Pausar y reactivar'],
+      card: { type: 'code', content: 'Netflix: $45,900 cada mes\n  -> Se crea solo el dia 15\nArriendo: $1,200,000 mensual\n  -> Se crea el dia 1\nGimnasio: $89,000 semanal\n  -> Todos los lunes\nTu no haces nada. La app se acuerda.' }
+    },
+    {
+      icon: '&#128276;',
+      title: 'Avisos utiles <span class="accent">cuando importan</span>',
+      desc: 'Te avisa cuando se pasa un presupuesto, cuando entra plata, o cuando tienes un insight del dia. Tambien puedes recibir push en el celular.',
+      tags: ['En la app', 'Push al celular', 'Avisos del dia', 'Por correo', 'Para servicios externos'],
+      card: { type: 'code', content: 'Te pasaste del presupuesto\n  -> Te avisa al toque\nInsight del dia con IA\n  -> Como un coach financiero\nMensaje motivador diario\n  -> Con tus datos reales\nBienvenida al registrarte\n  -> Para que no te pierdas' }
+    },
+    {
+      icon: '&#129504;',
+      title: 'La IA te <span class="accent">conoce y te ayuda</span>',
+      desc: 'Analiza como gastas y te dice que tipo de persona financiera eres. Te da un puntaje de 0 a 100 y areas donde puedes mejorar.',
+      tags: ['Tu perfil unico', 'Puntaje 0-100', 'Tus habitos buenos', 'Donde mejorar', 'Mensaje del dia'],
+      card: { type: 'code', content: '"El Ahorrador Inteligente" - 78/100\nTus habitos:\n  ✓ Registras todo\n  ✓ Balance positivo\n  ✓ Categorias claras\nDonde mejorar:\n  → Define metas mensuales\nMensaje del dia:\n  "Llevas 5 dias bajo el limite\n   del presupuesto. Vas genial."' }
+    },
+    {
+      icon: '&#128187;',
+      title: 'Hecho para <span class="accent">funcionar en todo</span>',
+      desc: 'Funciona en el navegador del computador, como app en el celular (Android y iOS), y aunque se caiga internet puedes usarla.',
+      tags: ['Computador', 'Celular', 'Android', 'iOS', 'Funciona offline', 'Multi-moneda'],
+      card: { type: 'metrics', items: [
+        { value: '48', label: 'Funciones listas' },
+        { value: '10', label: 'Tipos de dato' },
+        { value: '2', label: 'Monedas (COP, USD)' },
+        { value: '100%', label: 'Tuyo' }
+      ]}
+    }
+  ];
+
+  const stage = document.getElementById('presentationStage');
+  const stageContent = document.getElementById('stageContent');
+  const stageProgressFill = document.getElementById('stageProgressFill');
+  const stageCounter = document.getElementById('stageCounter');
+
+  let presentationActive = false;
+  let currentSlide = 0;
+  let slideInterval = null;
+  let slideProgress = 0;
+  let isPaused = false;
+  const slideDuration = 7000;
+  const tickMs = 80;
+
+  function buildSlides() {
+    stageContent.innerHTML = '';
+    slides.forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'slide-container';
+      div.dataset.index = i;
+
+      let cardHTML = '';
+      if (s.card) {
+        if (s.card.type === 'code') {
+          cardHTML = `<div class="slide-card"><div class="slide-card-code">${s.card.content}</div></div>`;
+        } else if (s.card.type === 'metrics') {
+          cardHTML = `<div class="slide-card"><div class="slide-card-metric">${s.card.items.map(m =>
+            `<div class="slide-metric"><div class="slide-metric-value">${m.value}</div><div class="slide-metric-label">${m.label}</div></div>`
+          ).join('')}</div></div>`;
+        }
+      }
+
+      div.innerHTML = `
+        <div class="slide-icon">${s.icon}</div>
+        <div class="slide-title">${s.title}</div>
+        <div class="slide-desc">${s.desc}</div>
+        ${cardHTML}
+        <div class="slide-tags">${s.tags.map(t => `<span class="slide-tag">${t}</span>`).join('')}</div>
+      `;
+      stageContent.appendChild(div);
+    });
+  }
+
+  function showSlide(index) {
+    const allSlides = stageContent.querySelectorAll('.slide-container');
+    allSlides.forEach(s => { s.classList.remove('slide-active', 'slide-exit'); });
+
+    const prev = stageContent.querySelector(`.slide-container[data-index="${currentSlide}"]`);
+    if (prev && index !== currentSlide) prev.classList.add('slide-exit');
+
+    currentSlide = ((index % slides.length) + slides.length) % slides.length;
+    const next = stageContent.querySelector(`.slide-container[data-index="${currentSlide}"]`);
+    if (next) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { next.classList.add('slide-active'); });
+      });
+    }
+
+    stageCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+    slideProgress = 0;
+    stageProgressFill.style.width = '0%';
+  }
+
+  const autoHint = document.getElementById('autoHint');
+  if (autoHint) {
+    autoHint.addEventListener('click', () => {
+      if (presentationActive) stopPresentation();
+      else startPresentation();
+    });
+  }
+
+  function startPresentation() {
+    if (presentationActive) return;
+    presentationActive = true;
+    isPaused = false;
+    buildSlides();
+    stage.classList.add('active');
+    nav.classList.add('nav-hidden');
+    document.body.style.overflow = 'hidden';
+    progress.style.display = 'none';
+    currentSlide = 0;
+    showSlide(0);
+    startTimer();
+  }
+
+  function stopPresentation() {
+    presentationActive = false;
+    clearInterval(slideInterval);
+    stage.classList.remove('active');
+    nav.classList.remove('nav-hidden');
+    document.body.style.overflow = '';
+    progress.style.display = '';
+  }
+
+  function startTimer() {
+    clearInterval(slideInterval);
+    slideInterval = setInterval(() => {
+      if (isPaused) return;
+      slideProgress += tickMs;
+      const pct = Math.min((slideProgress / slideDuration) * 100, 100);
+      stageProgressFill.style.width = `${pct}%`;
+      if (slideProgress >= slideDuration) {
+        showSlide(currentSlide + 1);
+      }
+    }, tickMs);
+  }
+
+  // Shortcut: Ctrl+Shift+P to toggle presentation
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+      e.preventDefault();
+      if (presentationActive) stopPresentation();
+      else startPresentation();
+      return;
+    }
+
+    if (!presentationActive) return;
+
+    if (e.key === 'Escape') {
+      stopPresentation();
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      showSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      showSlide(currentSlide - 1);
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      isPaused = !isPaused;
+    }
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,3 +1,5 @@
+<!-- [NORMA: IEEE 730 - Plan de Aseguramiento de Calidad] Este documento constituye el registro formal del plan de calidad del software y requerimientos de usuario -->
+<!-- [NORMA: ISO/IEC 12207 - Proceso de Documentación] Documentación del ciclo de vida conforme al proceso estándar para el Reporte de Pruebas (Test Report) -->
 # Test Report - Sistema de Control de Gastos (PostgreSQL)
 
 ## Resumen Ejecutivo

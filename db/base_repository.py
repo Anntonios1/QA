@@ -28,6 +28,8 @@ class PasswordMixin:
     """Funciones de hashing de contraseña reutilizables."""
 
     @staticmethod
+    # [NORMA: ISO/IEC 27001 - Control A.10.1.1] Uso de algoritmo de cifrado robusto para protección de credenciales
+    # [NORMA: OWASP Mobile Top 10 - M4] Autenticación insegura prevenida mediante hash con sal (salt)
     def hash_password(password: str, salt: str = None) -> tuple:
         """Genera hash seguro con PBKDF2-SHA256 + salt (ISO 9126 - Seguridad)."""
         if salt is None:
@@ -38,6 +40,8 @@ class PasswordMixin:
         return f"{salt}${hashed.hex()}", salt
 
     @staticmethod
+    # [NORMA: ISO/IEC 27001 - Control A.10.1.1] Uso de algoritmo de cifrado robusto para protección de credenciales
+    # [NORMA: OWASP Mobile Top 10 - M4] Autenticación insegura prevenida mediante hash con sal (salt)
     def verify_password(password: str, stored_hash: str) -> bool:
         """Verifica contraseña contra hash almacenado."""
         salt, _ = stored_hash.split('$', 1)
@@ -52,7 +56,7 @@ class PasswordMixin:
 class BaseUsuarioRepository(ABC):
 
     @abstractmethod
-    def crear(self, nombre: str, email: str, password: str) -> dict:
+    def crear(self, nombre: str, email: str, password: str, moneda: str = "COP") -> dict:
         """Registra un nuevo usuario. Retorna dict o None si email duplicado."""
         ...
 
@@ -66,6 +70,21 @@ class BaseUsuarioRepository(ABC):
         """Obtiene un usuario por ID. Retorna dict o None."""
         ...
 
+    @abstractmethod
+    def listar_ids_activos(self) -> list:
+        """Lista IDs de usuarios activos."""
+        ...
+
+    @abstractmethod
+    def actualizar_perfil(self, usuario_id: int, nombre: str = None, moneda: str = None) -> dict:
+        """Actualiza nombre y/o moneda del usuario. Retorna dict actualizado o None."""
+        ...
+
+    @abstractmethod
+    def cambiar_password(self, usuario_id: int, password_actual: str, password_nueva: str) -> dict:
+        """Cambia la contraseña verificando la actual. Retorna dict con resultado."""
+        ...
+
 
 # ============================================================
 #  INTERFAZ: Repositorio de Categorías
@@ -74,13 +93,48 @@ class BaseUsuarioRepository(ABC):
 class BaseCategoriaRepository(ABC):
 
     @abstractmethod
-    def listar(self, tipo: str = None) -> list:
-        """Lista categorías activas, opcionalmente filtradas por tipo."""
+    def asegurar_para_usuario(self, usuario_id: int) -> None:
+        """Asegura categorías base para el usuario (seeding/migración)."""
         ...
 
     @abstractmethod
-    def obtener_por_id(self, categoria_id: int) -> dict:
-        """Obtiene una categoría por ID."""
+    def listar(self, usuario_id: int, tipo: str = None) -> list:
+        """Lista categorías activas del usuario, opcionalmente filtradas por tipo."""
+        ...
+
+    @abstractmethod
+    def obtener_por_id(self, categoria_id: int, usuario_id: int) -> dict:
+        """Obtiene una categoría por ID del usuario."""
+        ...
+
+    @abstractmethod
+    def crear(
+        self,
+        usuario_id: int,
+        nombre: str,
+        tipo: str,
+        icono: str = "",
+        descripcion: str = "",
+    ) -> dict:
+        """Crea una categoría del usuario y retorna su representación o None si falla."""
+        ...
+
+    @abstractmethod
+    def actualizar(
+        self,
+        usuario_id: int,
+        categoria_id: int,
+        nombre: str = None,
+        tipo: str = None,
+        icono: str = None,
+        descripcion: str = None,
+    ) -> dict:
+        """Actualiza una categoría del usuario. Retorna dict con estado de actualización."""
+        ...
+
+    @abstractmethod
+    def desactivar(self, usuario_id: int, categoria_id: int) -> bool:
+        """Desactiva una categoría del usuario (soft delete)."""
         ...
 
 
@@ -97,10 +151,33 @@ class BaseMovimientoRepository(ABC):
         ...
 
     @abstractmethod
-    def listar_por_usuario(self, usuario_id: int, limite: int = 50,
-                           tipo: str = None, fecha_desde: str = None,
-                           fecha_hasta: str = None) -> list:
-        """Lista movimientos de un usuario con filtros opcionales."""
+    def listar_por_usuario(
+        self,
+        usuario_id: int,
+        limite: int = 50,
+        offset: int = 0,
+        tipo: str = None,
+        fecha_desde: str = None,
+        fecha_hasta: str = None,
+        categoria_id: int = None,
+        monto_min: float = None,
+        monto_max: float = None,
+    ) -> list:
+        """Lista movimientos de un usuario con filtros y paginación opcionales."""
+        ...
+
+    @abstractmethod
+    def contar_por_usuario(
+        self,
+        usuario_id: int,
+        tipo: str = None,
+        fecha_desde: str = None,
+        fecha_hasta: str = None,
+        categoria_id: int = None,
+        monto_min: float = None,
+        monto_max: float = None,
+    ) -> int:
+        """Cuenta movimientos con filtros opcionales (para paginación)."""
         ...
 
     @abstractmethod

@@ -1,10 +1,12 @@
+<!-- [NORMA: IEEE 730 - Plan de Aseguramiento de Calidad] Este documento constituye el registro formal del plan de calidad del software y requerimientos de usuario -->
+<!-- [NORMA: ISO/IEC 12207 - Proceso de Documentación] Documentación del ciclo de vida conforme al proceso estándar para el Levantamiento de Requerimientos -->
 # Levantamiento de Requerimientos
 ## Sistema de Control de Gastos — ControlCash
 
 | Campo             | Detalle                                      |
 |-------------------|----------------------------------------------|
 | **Proyecto**      | ControlCash — Sistema de Control de Gastos   |
-| **Versión**       | 1.0                                          |
+| **Versión**       | 1.1                                          |
 | **Fecha**         | 11 de marzo de 2026                          |
 | **Normas marco**  | CMMI N2/N3, ISO 9001, ISO 9126, IEEE 730, ISO/IEC 25000, ISO/IEC 12207 |
 | **Clasificación** | Interno — Uso académico                      |
